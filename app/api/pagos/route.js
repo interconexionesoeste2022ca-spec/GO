@@ -1,51 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import jwt from 'jsonwebtoken'
+import { supabaseAdmin, getSesion, assertRol, registrarAuditoria, calcularMora, generarNumeroFactura, respError } from '@/lib/apiHelpers'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
-function getSesion(req) {
-  try {
-    const header = req.headers.get('authorization') || ''
-    const token = header.replace('Bearer ', '').trim()
-    if (!token) return null
-    return jwt.verify(token, process.env.JWT_SECRET)
-  } catch { return null }
-}
-
-function assertRol(sesion, roles) {
-  if (!sesion) throw new Error('SESION_INVALIDA')
-  if (!roles.map(r => r.toLowerCase()).includes((sesion.rol || '').toLowerCase()))
-    throw new Error('ACCESO_DENEGADO')
-}
-
-// Calcula días de mora y penalización
-function calcularMora(fechaPago, mesCobro, precioUsd) {
-  if (!fechaPago || !mesCobro) return { diasMora: 0, penalizacion: 0 }
-  try {
-    const vencimiento = new Date(`${mesCobro}-05`)
-    const pago = new Date(fechaPago)
-    const diff = Math.floor((pago - vencimiento) / (1000 * 60 * 60 * 24))
-    const diasMora = diff > 0 ? diff : 0
-    const penalizacion = diasMora > 10 ? Number((Number(precioUsd || 0) * 0.05).toFixed(2)) : 0
-    return { diasMora, penalizacion }
-  } catch { return { diasMora: 0, penalizacion: 0 } }
-}
-
-async function registrarAuditoria(sesion, accion, id, antes, despues, req) {
-  try {
-    await supabaseAdmin.from('auditoria').insert([{
-      usuario: sesion.usuario, rol: sesion.rol, accion,
-      entidad: 'pagos', entidad_id: String(id),
-      estado_antes: antes ? JSON.stringify(antes) : null,
-      estado_despues: despues ? JSON.stringify(despues) : null,
-      ip_hint: req.headers.get('x-forwarded-for') || 'local'
-    }])
-  } catch { /* no bloquea */ }
-}
+const SIN_TASA         = ['Efectivo Divisas', 'Zelle', 'Binance']
+const REQUIERE_TITULAR = ['Zelle', 'Binance']
+const ESTADOS_VERIF    = ['Verificado', 'Confirmado', 'Rechazado', 'Pendiente']
 
 export async function GET(req) {
   try {
@@ -56,25 +14,24 @@ export async function GET(req) {
     const cliente_id = searchParams.get('cliente_id')
     const estado     = searchParams.get('estado')
     const mes        = searchParams.get('mes')
-    const limite     = parseInt(searchParams.get('limite') || '200')
+    const page       = parseInt(searchParams.get('page') || '1')
+    const per        = Math.min(parseInt(searchParams.get('per') || '200'), 500)
+    const from       = (page - 1) * per
 
     let query = supabaseAdmin
       .from('pagos')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('fecha_pago', { ascending: false })
-      .limit(limite)
+      .range(from, from + per - 1)
 
     if (cliente_id) query = query.eq('cliente_id', cliente_id)
     if (estado)     query = query.eq('estado_verificacion', estado)
     if (mes)        query = query.eq('mes_cobro', mes)
 
-    const { data, error } = await query
+    const { data, error, count } = await query
     if (error) throw error
-    return NextResponse.json({ ok: true, data: data || [] })
-  } catch (e) {
-    console.error('[GET /api/pagos]', e.message)
-    return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
-  }
+    return NextResponse.json({ ok: true, data: data || [], total: count, page, per })
+  } catch (e) { return respError(e) }
 }
 
 export async function POST(req) {
@@ -83,46 +40,44 @@ export async function POST(req) {
     assertRol(sesion, ['admin', 'staff'])
 
     const body = await req.json()
-    const {
-      cliente_id, mes_cobro, monto_facturado_usd, fecha_pago,
+    const { cliente_id, mes_cobro, monto_facturado_usd, fecha_pago,
       tasa_bcv_facturacion, tasa_bcv_pago, monto_pagado_bs,
       cuenta_id, referencia, tipo_pago, nota_pago, capture_url,
       correo_del_titular, nombre_del_titular, monto_usd_real,
-      cedula_cliente, nombre_cliente, tipo_cliente, nombre_plan
-    } = body
+      cedula_cliente, nombre_cliente, tipo_cliente, nombre_plan, descuento_usd } = body
 
-    if (!cliente_id || !mes_cobro) {
+    if (!cliente_id || !mes_cobro)
       return NextResponse.json({ ok: false, msg: 'cliente_id y mes_cobro son requeridos.' }, { status: 400 })
+
+    // Verificar duplicado (mismo cliente, mismo mes, no rechazado)
+    const { data: existe } = await supabaseAdmin
+      .from('pagos').select('id')
+      .eq('cliente_id', cliente_id)
+      .eq('mes_cobro', mes_cobro)
+      .neq('estado_verificacion', 'Rechazado')
+      .single()
+    if (existe)
+      return NextResponse.json({ ok: false, msg: `Ya existe un pago registrado para ${mes_cobro}.` }, { status: 409 })
+
+    // Datos del cliente si no vienen
+    let cliData = { cedula_cliente, nombre_cliente, tipo_cliente }
+    if (!nombre_cliente) {
+      const { data: c } = await supabaseAdmin.from('clientes')
+        .select('documento_identidad, nombre_razon_social, tipo_cliente')
+        .eq('id', cliente_id).single()
+      if (c) { cliData = { cedula_cliente: c.documento_identidad, nombre_cliente: c.nombre_razon_social, tipo_cliente: c.tipo_cliente } }
     }
 
-    // Obtener datos del cliente si no se pasaron
-    let clienteData = { cedula_cliente, nombre_cliente, tipo_cliente }
-    if (!nombre_cliente && cliente_id) {
-      const { data: c } = await supabaseAdmin
-        .from('clientes')
-        .select('documento_identidad, nombre_razon_social, tipo_cliente, plan_id')
-        .eq('id', cliente_id)
-        .single()
-      if (c) {
-        clienteData.cedula_cliente = c.documento_identidad
-        clienteData.nombre_cliente = c.nombre_razon_social
-        clienteData.tipo_cliente   = c.tipo_cliente
-      }
-    }
-
-    // Tipos donde la tasa es 1
-    const SIN_TASA = ['Efectivo Divisas', 'Zelle', 'Binance']
-    const esSinTasa = SIN_TASA.includes(tipo_pago)
-    const REQUIERE_TITULAR = ['Zelle', 'Binance']
-    const esTitular = REQUIERE_TITULAR.includes(tipo_pago)
-
+    const esSinTasa   = SIN_TASA.includes(tipo_pago)
+    const esTitular   = REQUIERE_TITULAR.includes(tipo_pago)
     const { diasMora, penalizacion } = calcularMora(fecha_pago, mes_cobro, monto_facturado_usd)
+    const numero_factura = await generarNumeroFactura()
 
     const payload = {
       cliente_id,
-      cedula_cliente:       clienteData.cedula_cliente || '',
-      nombre_cliente:       clienteData.nombre_cliente || '',
-      tipo_cliente:         clienteData.tipo_cliente || '',
+      cedula_cliente:       cliData.cedula_cliente || '',
+      nombre_cliente:       cliData.nombre_cliente || '',
+      tipo_cliente:         cliData.tipo_cliente || '',
       nombre_plan:          nombre_plan || '',
       mes_cobro,
       monto_facturado_usd:  Number(monto_facturado_usd || 0),
@@ -140,26 +95,23 @@ export async function POST(req) {
       correo_del_titular:   esTitular ? (correo_del_titular || '') : '',
       nombre_del_titular:   esTitular ? (nombre_del_titular || '') : '',
       monto_usd_real:       Number(monto_usd_real || monto_facturado_usd || 0),
+      descuento_usd:        Number(descuento_usd || 0),
       dias_mora:            diasMora,
       penalizacion_mora:    penalizacion,
+      numero_factura,
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('pagos')
-      .insert([payload])
-      .select()
-      .single()
-
+    const { data, error } = await supabaseAdmin.from('pagos').insert([payload]).select().single()
     if (error) throw error
 
-    await registrarAuditoria(sesion, 'CREAR_PAGO', data.id, null, data, req)
+    // Actualizar ultima_facturacion del cliente
+    await supabaseAdmin.from('clientes')
+      .update({ ultima_facturacion: payload.fecha_pago })
+      .eq('id', cliente_id)
+
+    await registrarAuditoria(sesion, 'CREAR_PAGO', 'pagos', data.id, null, data, req)
     return NextResponse.json({ ok: true, data }, { status: 201 })
-  } catch (e) {
-    if (e.message === 'ACCESO_DENEGADO') return NextResponse.json({ ok: false, msg: 'Sin permiso.' }, { status: 403 })
-    if (e.message === 'SESION_INVALIDA') return NextResponse.json({ ok: false, msg: 'No autorizado.' }, { status: 401 })
-    console.error('[POST /api/pagos]', e.message)
-    return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
-  }
+  } catch (e) { return respError(e) }
 }
 
 export async function PATCH(req) {
@@ -171,8 +123,6 @@ export async function PATCH(req) {
     const { id, estado_verificacion, comentario_pago, ...otros } = body
     if (!id) return NextResponse.json({ ok: false, msg: 'ID requerido.' }, { status: 400 })
 
-    // Permisos según acción
-    const ESTADOS_VERIF = ['Verificado', 'Confirmado', 'Rechazado', 'Pendiente']
     if (estado_verificacion && ESTADOS_VERIF.includes(estado_verificacion)) {
       assertRol(sesion, ['admin', 'staff', 'verificador'])
     } else {
@@ -182,29 +132,23 @@ export async function PATCH(req) {
     const { data: antes } = await supabaseAdmin.from('pagos').select('*').eq('id', id).single()
 
     const update = { ...otros }
-    if (estado_verificacion) update.estado_verificacion = estado_verificacion
+    if (estado_verificacion) {
+      update.estado_verificacion = estado_verificacion
+      // Registrar quién y cuándo verificó
+      if (['Verificado', 'Confirmado', 'Rechazado'].includes(estado_verificacion)) {
+        update.verificado_por = sesion.usuario
+        update.verificado_en  = new Date().toISOString()
+      }
+    }
     if (comentario_pago !== undefined) update.comentario_pago = comentario_pago
 
-    const { data, error } = await supabaseAdmin
-      .from('pagos')
-      .update(update)
-      .eq('id', id)
-      .select()
-      .single()
-
+    const { data, error } = await supabaseAdmin.from('pagos').update(update).eq('id', id).select().single()
     if (error) throw error
 
-    await registrarAuditoria(sesion,
-      estado_verificacion ? `PAGO_${estado_verificacion.toUpperCase()}` : 'EDITAR_PAGO',
-      id, antes, data, req)
-
+    const accion = estado_verificacion ? `PAGO_${estado_verificacion.toUpperCase()}` : 'EDITAR_PAGO'
+    await registrarAuditoria(sesion, accion, 'pagos', id, antes, data, req)
     return NextResponse.json({ ok: true, data })
-  } catch (e) {
-    if (e.message === 'ACCESO_DENEGADO') return NextResponse.json({ ok: false, msg: 'Sin permiso.' }, { status: 403 })
-    if (e.message === 'SESION_INVALIDA') return NextResponse.json({ ok: false, msg: 'No autorizado.' }, { status: 401 })
-    console.error('[PATCH /api/pagos]', e.message)
-    return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
-  }
+  } catch (e) { return respError(e) }
 }
 
 export async function DELETE(req) {
@@ -220,12 +164,7 @@ export async function DELETE(req) {
     const { error } = await supabaseAdmin.from('pagos').delete().eq('id', id)
     if (error) throw error
 
-    await registrarAuditoria(sesion, 'ELIMINAR_PAGO', id, antes, null, req)
+    await registrarAuditoria(sesion, 'ELIMINAR_PAGO', 'pagos', id, antes, null, req)
     return NextResponse.json({ ok: true })
-  } catch (e) {
-    if (e.message === 'ACCESO_DENEGADO') return NextResponse.json({ ok: false, msg: 'Sin permiso.' }, { status: 403 })
-    if (e.message === 'SESION_INVALIDA') return NextResponse.json({ ok: false, msg: 'No autorizado.' }, { status: 401 })
-    console.error('[DELETE /api/pagos]', e.message)
-    return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
-  }
+  } catch (e) { return respError(e) }
 }

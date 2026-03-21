@@ -1,16 +1,27 @@
+// middleware.js — Protección de rutas /dashboard
+// Versión sin dependencias externas (compatible con Next.js 14 sin instalar jose)
 import { NextResponse } from 'next/server'
 
 export function middleware(req) {
   const { pathname } = req.nextUrl
 
-  // Solo proteger rutas del dashboard
   if (!pathname.startsWith('/dashboard')) return NextResponse.next()
 
-  // El token viaja en el header Authorization desde el cliente
-  // La verificación real ocurre en cada API route con getSesion()
-  // Aquí solo podemos verificar que la cookie de sesión no exista (opcional)
-  // La protección principal es en layout.jsx con getToken() + redirect
+  // Verificar cookie httpOnly que pone el login
+  const tokenCookie = req.cookies.get('galanet_token')?.value
 
+  // También aceptar el token que ya tenían en localStorage
+  // (el layout.jsx lo redirige si no hay sesión — doble protección)
+  if (!tokenCookie) {
+    // Si no hay cookie, redirigir al login
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // El token existe — la verificación criptográfica la hace cada API route
+  // con getSesion() que sí tiene acceso a jsonwebtoken (Node.js runtime)
+  // El middleware solo actúa como primera barrera
   return NextResponse.next()
 }
 

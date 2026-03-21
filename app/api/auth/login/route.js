@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/apiHelpers'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
 
 function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex')
@@ -15,7 +10,6 @@ function sha256(text) {
 export async function POST(req) {
   try {
     const { usuario, password } = await req.json()
-
     if (!usuario || !password)
       return NextResponse.json({ ok: false, msg: 'Usuario y contraseña requeridos.' }, { status: 400 })
 
@@ -32,23 +26,35 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, msg: 'Cuenta desactivada.' }, { status: 403 })
 
     if (sha256(password.trim()) !== data.password_hash)
-      return NextResponse.json({ ok: false, msg: 'Contraseña incorrecta.' }, { status: 401 })
+      return NextResponse.json({ ok: false, msg: 'Usuario o contraseña incorrectos.' }, { status: 401 })
 
-    await supabaseAdmin
-      .from('usuarios')
+    await supabaseAdmin.from('usuarios')
       .update({ ultimo_login: new Date().toISOString() })
       .eq('usuario', data.usuario)
 
     const token = jwt.sign(
       { usuario: data.usuario, rol: data.rol },
       process.env.JWT_SECRET,
-      { expiresIn: '5h' }
+      { expiresIn: '8h' }
     )
 
-    return NextResponse.json({ ok: true, token, usuario: data.usuario, rol: data.rol })
-
+    const response = NextResponse.json({ ok: true, token, usuario: data.usuario, rol: data.rol })
+    response.cookies.set('galanet_token', token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:   60 * 60 * 8,
+      path:     '/',
+    })
+    return response
   } catch (e) {
-    console.error('login error:', e)
-    return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
+    console.error('[login]', e)
+    return NextResponse.json({ ok: false, msg: 'Error interno.' }, { status: 500 })
   }
+}
+
+export async function DELETE() {
+  const response = NextResponse.json({ ok: true })
+  response.cookies.delete('galanet_token')
+  return response
 }
