@@ -3,17 +3,17 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getSesion, tienePermiso, alertaExito, alertaError } from '@/lib/api'
 
 const ESTADO_COLOR = {
-  Activo:     { pin:'#16a34a', bg:'#dcfce7', txt:'#166534', ring:'#bbf7d0' },
-  Cortado:    { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b', ring:'#fecaca' },
-  Deudor:     { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e', ring:'#fde68a' },
-  Suspendido: { pin:'#6b7280', bg:'#f1f5f9', txt:'#374151', ring:'#e2e8f0' },
+  Activo:     { pin: '#00ff88', bg: 'rgba(0, 255, 136, 0.15)', txt: '#00ff88', ring: 'rgba(0, 255, 136, 0.3)', glow: 'rgba(0, 255, 136, 0.5)' },
+  Cortado:    { pin: '#ff4757', bg: 'rgba(255, 71, 87, 0.15)', txt: '#ff4757', ring: 'rgba(255, 71, 87, 0.3)', glow: 'rgba(255, 71, 87, 0.5)' },
+  Deudor:     { pin: '#ffa502', bg: 'rgba(255, 165, 2, 0.15)', txt: '#ffa502', ring: 'rgba(255, 165, 2, 0.3)', glow: 'rgba(255, 165, 2, 0.5)' },
+  Suspendido: { pin: '#747d8c', bg: 'rgba(116, 125, 140, 0.15)', txt: '#747d8c', ring: 'rgba(116, 125, 140, 0.3)', glow: 'rgba(116, 125, 140, 0.5)' },
 }
 
-// Iconos para diferentes tipos de ubicación
+// Iconos para diferentes tipos de ubicación con diseño futurista
 const ICON_TYPES = {
-  cliente:   { color: '#16a34a', label: 'Clientes' },
-  antena:    { color: '#2563eb', label: 'Antenas' },
-  punto_ref: { color: '#f59e0b', label: 'Puntos de Referencia' },
+  cliente:   { color: '#00ff88', label: 'Clientes', gradient: 'linear-gradient(135deg, #00ff88, #00d4ff)' },
+  antena:    { color: '#00d4ff', label: 'Antenas', gradient: 'linear-gradient(135deg, #00d4ff, #0099ff)' },
+  punto_ref: { color: '#ffa502', label: 'Puntos de Referencia', gradient: 'linear-gradient(135deg, #ffa502, #ff6348)' },
 }
 
 // Barquisimeto, Venezuela
@@ -43,49 +43,70 @@ function calcularDistanciaRuta(puntos) {
   return total
 }
 
-// ─── Iconos SVG Personalizados por ISTICH ───
-function makeSvgPin(color, icon = 'default', size = { width: 32, height: 42 }) {
+// ─── Iconos SVG Personalizados con Diseño Futurista ───
+function makeSvgPin(color, icon = 'default', size = { width: 40, height: 50 }) {
   const icons = {
-    // Cliente Normal - Pin verde con círculo blanco
-    default: `<circle cx="16" cy="16" r="6" fill="white"/>`,
+    // Cliente Normal - Diseño futurista con círculo brillante
+    default: `
+      <circle cx="20" cy="20" r="8" fill="white" opacity="0.9"/>
+      <circle cx="20" cy="20" r="4" fill="${color}"/>
+      <circle cx="20" cy="20" r="2" fill="white" opacity="0.8"/>
+    `,
     
-    // Cliente con Alerta - Pin rojo con exclamación
-    alert: `<circle cx="16" cy="16" r="7" fill="white"/><path d="M16 11V18M16 21H16.01" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>`,
+    // Cliente con Alerta - Diseño con pulso y warning
+    alert: `
+      <circle cx="20" cy="20" r="10" fill="white" opacity="0.8"/>
+      <path d="M20 15V22M20 25H20.01" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    `,
     
-    // Antena - Pin azul con diseño de torre
-    antena: `<path d="M16 8V22M12 12L16 8L20 12M10 16L16 8L22 16" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="8" r="1.5" fill="white"/>`,
+    // Antena - Diseño de torre con ondas de señal
+    antena: `
+      <path d="M20 10V26M16 14L20 10L24 14M14 18L20 10L26 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="10" r="2" fill="white"/>
+    `,
     
-    // Punto de Referencia - Pin ámbar con círculos concéntricos
-    punto: `<circle cx="16" cy="14" r="6" stroke="white" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="white"/>`,
+    // Punto de Referencia - Diseño con anillos concéntricos
+    punto: `
+      <circle cx="20" cy="18" r="8" stroke="white" stroke-width="2" fill="none" opacity="0.8"/>
+      <circle cx="20" cy="18" r="12" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+      <circle cx="20" cy="18" r="4" fill="white" opacity="0.9"/>
+      <circle cx="20" cy="18" r="2" fill="${color}"/>
+    `,
   }
 
   // Ajustar viewBox según el tipo de icono
   const getViewBox = () => {
     switch(icon) {
-      case 'antena': return '0 0 32 40'
-      case 'punto': return '0 0 32 36'
-      default: return '0 0 32 42'
+      case 'antena': return '0 0 40 50'
+      case 'punto': return '0 0 40 45'
+      default: return '0 0 40 50'
     }
   }
 
-  // Ajustar path del pin según el tamaño
+  // Path del pin con diseño futurista
   const getPinPath = () => {
     switch(icon) {
-      case 'antena': return 'M16 40C16 40 32 24.5 32 15C32 6.16344 24.8366 -1 16 -1C7.16344 -1 0 6.16344 0 15C0 24.5 16 40 16 40Z'
-      case 'punto': return 'M16 36C16 36 32 22 32 14C32 5.16344 24.8366 -2 16 -2C7.16344 -2 0 5.16344 0 14C0 22 16 36 16 36Z'
-      default: return 'M16 42C16 42 32 25.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 25.5 16 42 16 42Z'
+      case 'antena': return 'M20 50C20 50 40 30 40 18C40 8.05887 31.0459 0 20 0C8.9541 0 0 8.05887 0 18C0 30 20 50 20 50Z'
+      case 'punto': return 'M20 45C20 45 40 26 40 16C40 6.05887 31.0459 -2 20 -2C8.9541 -2 0 6.05887 0 16C0 26 20 45 20 45Z'
+      default: return 'M20 50C20 50 40 31 40 20C40 8.9543 31.0459 0 20 0C8.9541 0 0 8.9543 0 20C0 31 20 50 20 50Z'
     }
   }
 
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
     <svg width="${size.width}" height="${size.height}" viewBox="${getViewBox()}" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <filter id="shadow" x="-2" y="-2" width="36" height="46">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
-        <feOffset dx="0" dy="1" result="offsetblur"/>
-        <feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>
-        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <path d="${getPinPath()}" fill="${color}" filter="url(#shadow)"/>
+      <defs>
+        <filter id="shadow" x="-4" y="-4" width="48" height="58">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+          <feOffset dx="0" dy="2" result="offsetblur"/>
+          <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
+        </linearGradient>
+      </defs>
+      <path d="${getPinPath()}" fill="url(#pinGrad)" filter="url(#shadow)" opacity="0.95"/>
       ${icons[icon] || icons.default}
     </svg>
   `)}`
@@ -98,933 +119,1245 @@ export default function MapaPage() {
   const mapObj   = useRef(null)
   const markersRef = useRef([])
   const leafletRef = useRef(null)
-  const medidorActivoRef = useRef(false)
-  const polylineRef = useRef(null)
-
   const [clientes, setClientes] = useState([])
-  const [antenas,  setAntenas]  = useState([])
+  const [antenas, setAntenas] = useState([])
   const [puntosRef, setPuntosRef] = useState([])
-  const [planes,   setPlanes]   = useState([])
   const [reportes, setReportes] = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [leafletReady, setLeafletReady] = useState(false)
-  
-  const [busquedaGlobal, setBusquedaGlobal] = useState('')
-  const [resultadosBusqueda, setResultadosBusqueda] = useState([])
-  const [mostrarResultados, setMostrarResultados] = useState(false)
-  const [busquedaActiva, setBusquedaActiva] = useState(false)
-  
-  const [contextMenu, setContextMenu] = useState(null)
-  const [contextCoords, setContextCoords] = useState(null)
-  const [clienteResaltado, setClienteResaltado] = useState(null)
-  
-  const [busqueda, setBusqueda] = useState('')
-  const [filtro,   setFiltro]   = useState('')
-  const [selected, setSelected] = useState(null)
-  const [selectedType, setSelectedType] = useState('cliente')
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [showSearch, setShowSearch] = useState(false)
+  const [filters, setFilters] = useState({
+    clientes: true,
+    antenas: true,
+    puntosRef: true,
+    estados: { Activo: true, Cortado: true, Deudor: true, Suspendido: true }
+  })
+  const [medirDistancia, setMedirDistancia] = useState(false)
+  const [rutaPuntos, setRutaPuntos] = useState([])
+  const [distanciaTotal, setDistanciaTotal] = useState(0)
   const [editCoord, setEditCoord] = useState(null)
-  const [saving,   setSaving]   = useState(false)
-  const [showMode, setShowMode] = useState('clientes')
-  const [modalForm, setModalForm] = useState(null)
-  const [formData, setFormData] = useState({})
-  const [formSaving, setFormSaving] = useState(false)
-  const [medidor, setMedidor] = useState({ activo: false, puntos: [], distanciaTotal: 0 })
+  const [showModalAntena, setShowModalAntena] = useState(false)
+  const [showModalPunto, setShowModalPunto] = useState(false)
+  const [nuevaAntena, setNuevaAntena] = useState({
+    nombre: '',
+    latitud: 0,
+    longitud: 0,
+    banda_frecuencia: '',
+    potencia_watts: '',
+    alcance_approx_metros: '',
+    ubicacion_descripcion: '',
+    nota_tecnica: ''
+  })
+  const [nuevoPunto, setNuevoPunto] = useState({
+    nombre: '',
+    latitud: 0,
+    longitud: 0,
+    ubicacion_descripcion: ''
+  })
+  const [contextMenu, setContextMenu] = useState(null)
+  const [highlightedClient, setHighlightedClient] = useState(null)
 
-  // ─── Cargar datos ─────────────────────────────────────────────
-  const cargar = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [c, a, s, p, rep] = await Promise.all([
-        api.get('/api/clientes'),
-        api.get('/api/antenas'),
-        api.get('/api/snacks'),
-        api.get('/api/planes'),
-        api.get('/api/reportes')
-      ])
-      setClientes(c.data || [])
-      setAntenas(a.data || [])
-      setPuntosRef(s.data || [])
-      setPlanes(p.data || [])
-      setReportes(rep.data || [])
-    } catch(e) { console.error(e) }
-    finally { setLoading(false) }
-  }, [])
-
-  useEffect(() => { cargar() }, [cargar])
-
-  // ─── Detectar si viene de reportes para resaltar cliente ───────────────────────
+  // Cargar Leaflet dinámicamente
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const clienteId = urlParams.get('resaltar_cliente')
-    const reporteId = urlParams.get('desde_reporte')
-    
-    if (clienteId && reporteId) {
-      const cliente = clientes.find(c => c.id === parseInt(clienteId))
-      if (cliente && cliente.latitud && cliente.longitud) {
-        setClienteResaltado(parseInt(clienteId))
-        setShowMode('clientes')
-        setSelected(cliente)
-        setSelectedType('cliente')
-        
-        // Mover mapa al cliente con zoom alto
-        setTimeout(() => {
-          mapObj.current?.flyTo([Number(cliente.latitud), Number(cliente.longitud)], 18, { duration: 1.5 })
-        }, 1000)
-        
-        // Limpar URL después de 3 segundos
-        setTimeout(() => {
-          window.history.replaceState({}, '', window.location.pathname)
-          setClienteResaltado(null)
-        }, 8000)
+    const loadLeaflet = async () => {
+      if (!window.L) {
+        // Cargar CSS
+        const leafletCss = document.createElement('link')
+        leafletCss.rel = 'stylesheet'
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(leafletCss)
+
+        // Cargar JS
+        const leafletJs = document.createElement('script')
+        leafletJs.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        leafletJs.onload = () => {
+          leafletRef.current = true
+        }
+        document.head.appendChild(leafletJs)
+      } else {
+        leafletRef.current = true
       }
     }
-  }, [clientes])
+    loadLeaflet()
+  }, [])
 
-  // ─── Buscador avanzado ─────────────────────────────────────────
-  const buscarGlobal = useCallback((query) => {
-    if (!query || query.length < 2) {
-      setResultadosBusqueda([])
-      setMostrarResultados(false)
+  // Cargar datos
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [clientesRes, antenasRes, puntosRes, reportesRes] = await Promise.all([
+          api('/clientes'),
+          api('/antenas'),
+          api('/snacks'),
+          api('/reportes')
+        ])
+        setClientes(clientesRes || [])
+        setAntenas(antenasRes || [])
+        setPuntosRef(puntosRes || [])
+        setReportes(reportesRes || [])
+      } catch (error) {
+        console.error('Error cargando datos:', error)
+        alertaError('Error al cargar los datos')
+      } finally {
+        setLoading(false)
+      }
+    }
+    if (sesion) loadData()
+  }, [sesion])
+
+  // Inicializar mapa
+  useEffect(() => {
+    if (!leafletRef.current || !mapRef.current || mapObj.current) return
+    
+    const L = window.L
+    const map = L.map(mapRef.current, { 
+      center: [BAR_LAT, BAR_LNG], 
+      zoom: 13, 
+      zoomControl: true,
+      attributionControl: false
+    })
+    
+    // Tile layer con estilo oscuro/moderno
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map)
+
+    // Evento click para editar coordenadas
+    map.on('click', (e) => {
+      if (canWrite) setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
+    })
+
+    // Evento contextmenu para menú contextual
+    map.on('contextmenu', (e) => {
+      e.originalEvent.preventDefault()
+      setContextMenu({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        x: e.originalEvent.clientX,
+        y: e.originalEvent.clientY
+      })
+    })
+
+    mapObj.current = map
+  }, [leafletRef.current, canWrite])
+
+  // Renderizar marcadores
+  useEffect(() => {
+    if (!mapObj.current || !leafletRef.current) return
+    const L = window.L
+
+    // Limpiar marcadores existentes
+    markersRef.current.forEach(marker => mapObj.current.removeLayer(marker))
+    markersRef.current = []
+
+    // Renderizar clientes
+    if (filters.clientes) {
+      clientes.forEach(cliente => {
+        if (!cliente.latitud || !cliente.longitud) return
+        if (!filters.estados[cliente.estado_servicio]) return
+
+        const tieneAlerta = reportes.some(r => r.cliente_id === cliente.id && r.estado === 'abierto')
+        const isHighlighted = highlightedClient === cliente.id
+        const colorConfig = ESTADO_COLOR[cliente.estado_servicio] || ESTADO_COLOR.Activo
+
+        const icon = L.divIcon({
+          html: `<div style="position:relative;">
+            ${makeSvgPin(colorConfig.pin, tieneAlerta ? 'alert' : 'default', { width: 40, height: 50 })}
+            ${isHighlighted ? `<div style="position:absolute;top:-5px;left:-5px;right:-5px;bottom:-5px;border:2px solid ${colorConfig.glow};border-radius:50%;animation:pulse 2s infinite;pointer-events:none;"></div>` : ''}
+          </div>`,
+          className: 'custom-marker',
+          iconSize: [40, 50],
+          iconAnchor: [20, 50],
+          popupAnchor: [0, -50],
+          zIndexOffset: isHighlighted ? 1000 : 0
+        })
+
+        const popup = L.popup()
+          .setContent(`
+            <div style="font-family:'Inter',sans-serif;min-width:200px;">
+              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">${cliente.nombre_razon_social}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📍 ${cliente.direccion_ubicacion || 'Sin dirección'}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📞 ${cliente.telefono || 'Sin teléfono'}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:8px;">📦 ${cliente.planes?.nombre_plan || 'Sin plan'}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <span style="background:${colorConfig.bg};color:${colorConfig.txt};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${cliente.estado_servicio}</span>
+                ${tieneAlerta ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">⚠️ Reporte activo</span>' : ''}
+              </div>
+            </div>
+          `)
+
+        const marker = L.marker([cliente.latitud, cliente.longitud], { icon })
+          .addTo(mapObj.current)
+          .bindPopup(popup)
+
+        markersRef.current.push(marker)
+      })
+    }
+
+    // Renderizar antenas
+    if (filters.antenas) {
+      antenas.forEach(antena => {
+        const icon = L.divIcon({
+          html: makeSvgPin(ICON_TYPES.antena.color, 'antena', { width: 40, height: 50 }),
+          className: 'custom-marker',
+          iconSize: [40, 50],
+          iconAnchor: [20, 50],
+          popupAnchor: [0, -50]
+        })
+
+        const popup = L.popup()
+          .setContent(`
+            <div style="font-family:'Inter',sans-serif;min-width:200px;">
+              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">🗼 ${antena.nombre}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📍 ${antena.ubicacion_descripcion || 'Sin descripción'}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📡 ${antena.banda_frecuencia || 'N/A'}</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">⚡ ${antena.potencia_watts || 'N/A'}W</div>
+              <div style="font-size:12px;color:#cccccc;margin-bottom:8px;">📏 ${antena.alcance_approx_metros || 'N/A'}m</div>
+              <div style="background:${antena.activa ? '#dcfce7' : '#fee2e2'};color:${antena.activa ? '#166534' : '#991b1b'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;display:inline-block;">
+                ${antena.activa ? '✅ Activa' : '❌ Inactiva'}
+              </div>
+            </div>
+          `)
+
+        const marker = L.marker([antena.latitud, antena.longitud], { icon })
+          .addTo(mapObj.current)
+          .bindPopup(popup)
+
+        markersRef.current.push(marker)
+      })
+    }
+
+    // Renderizar puntos de referencia
+    if (filters.puntosRef) {
+      puntosRef.forEach(punto => {
+        const icon = L.divIcon({
+          html: makeSvgPin(ICON_TYPES.punto_ref.color, 'punto', { width: 40, height: 45 }),
+          className: 'custom-marker',
+          iconSize: [40, 45],
+          iconAnchor: [20, 45],
+          popupAnchor: [0, -45]
+        })
+
+        const popup = L.popup()
+          .setContent(`
+            <div style="font-family:'Inter',sans-serif;min-width:200px;">
+              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">📍 ${punto.nombre}</div>
+              <div style="font-size:12px;color:#cccccc;">${punto.ubicacion_descripcion || 'Sin descripción'}</div>
+            </div>
+          `)
+
+        const marker = L.marker([punto.latitud, punto.longitud], { icon })
+          .addTo(mapObj.current)
+          .bindPopup(popup)
+
+        markersRef.current.push(marker)
+      })
+    }
+
+  }, [clientes, antenas, puntosRef, filters, reportes, highlightedClient])
+
+  // Buscar clientes con debounce
+  useEffect(() => {
+    if (!searchTerm) {
+      setSearchResults([])
+      setShowSearch(false)
       return
     }
 
-    const q = query.toLowerCase()
-    const resultados = []
+    const timeoutId = setTimeout(() => {
+      const results = []
+      
+      // Buscar clientes
+      clientes.forEach(cliente => {
+        if (cliente.nombre_razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cliente.documento_identidad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cliente.zona_sector?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cliente.direccion_ubicacion?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          results.push({
+            type: 'cliente',
+            data: cliente,
+            label: cliente.nombre_razon_social,
+            subtitle: cliente.zona_sector || cliente.direccion_ubicacion,
+            color: ICON_TYPES.cliente.color
+          })
+        }
+      })
 
-    // Buscar en clientes
-    clientes.forEach(c => {
-      if (c.nombre_razon_social?.toLowerCase().includes(q) ||
-          c.documento_identidad?.toLowerCase().includes(q) ||
-          c.zona_sector?.toLowerCase().includes(q) ||
-          c.direccion_ubicacion?.toLowerCase().includes(q)) {
-        resultados.push({
-          tipo: 'cliente',
-          id: c.id,
-          nombre: c.nombre_razon_social,
-          subtitulo: c.zona_sector || c.documento_identidad || '',
-          estado: c.estado_servicio,
-          lat: c.latitud,
-          lng: c.longitud,
-          color: ESTADO_COLOR[c.estado_servicio]?.pin || '#16a34a'
-        })
-      }
-    })
+      // Buscar antenas
+      antenas.forEach(antena => {
+        if (antena.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            antena.ubicacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            antena.banda_frecuencia?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          results.push({
+            type: 'antena',
+            data: antena,
+            label: antena.nombre,
+            subtitle: antena.ubicacion_descripcion,
+            color: ICON_TYPES.antena.color
+          })
+        }
+      })
 
-    // Buscar en antenas
-    antenas.forEach(a => {
-      if (a.nombre?.toLowerCase().includes(q) ||
-          a.ubicacion_descripcion?.toLowerCase().includes(q) ||
-          a.banda_frecuencia?.toLowerCase().includes(q)) {
-        resultados.push({
-          tipo: 'antena',
-          id: a.id,
-          nombre: a.nombre,
-          subtitulo: a.ubicacion_descripcion || a.banda_frecuencia || '',
-          estado: 'Activa',
-          lat: a.latitud,
-          lng: a.longitud,
-          color: '#2563eb'
-        })
-      }
-    })
+      // Buscar puntos de referencia
+      puntosRef.forEach(punto => {
+        if (punto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            punto.ubicacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          results.push({
+            type: 'punto_ref',
+            data: punto,
+            label: punto.nombre,
+            subtitle: punto.ubicacion_descripcion,
+            color: ICON_TYPES.punto_ref.color
+          })
+        }
+      })
 
-    // Buscar en puntos de referencia
-    puntosRef.forEach(p => {
-      if (p.nombre?.toLowerCase().includes(q) ||
-          p.ubicacion_descripcion?.toLowerCase().includes(q) ||
-          p.contacto_telefono?.toLowerCase().includes(q)) {
-        resultados.push({
-          tipo: 'punto_ref',
-          id: p.id,
-          nombre: p.nombre,
-          subtitulo: p.ubicacion_descripcion || p.contacto_telefono || '',
-          estado: 'Activo',
-          lat: p.latitud,
-          lng: p.longitud,
-          color: '#f59e0b'
-        })
-      }
-    })
-
-    setResultadosBusqueda(resultados.slice(0, 8)) // Limitar a 8 resultados
-    setMostrarResultados(true)
-  }, [clientes, antenas, puntosRef])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      buscarGlobal(busquedaGlobal)
+      setSearchResults(results.slice(0, 8))
+      setShowSearch(results.length > 0)
     }, 300)
 
-    return () => clearTimeout(timer)
-  }, [busquedaGlobal, buscarGlobal])
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, clientes, antenas, puntosRef])
 
-  // ─── Función para ir a un resultado de búsqueda ─────────────────
-  const irAResultado = (resultado) => {
-    if (!mapObj.current) return
-    
-    // Cambiar al modo correspondiente
-    setShowMode(resultado.tipo === 'cliente' ? 'clientes' : resultado.tipo === 'antena' ? 'antenas' : 'puntos_ref')
-    
-    // Mover el mapa
-    if (resultado.lat && resultado.lng) {
-      mapObj.current.flyTo([Number(resultado.lat), Number(resultado.lng)], 17, { duration: 1.5 })
-    }
-    
-    // Seleccionar el elemento
-    if (resultado.tipo === 'cliente') {
-      const cliente = clientes.find(c => c.id === resultado.id)
-      if (cliente) {
-        setSelected(cliente)
-        setSelectedType('cliente')
-      }
-    } else if (resultado.tipo === 'antena') {
-      const antena = antenas.find(a => a.id === resultado.id)
-      if (antena) {
-        setSelected(antena)
-        setSelectedType('antena')
-      }
-    } else if (resultado.tipo === 'punto_ref') {
-      const punto = puntosRef.find(p => p.id === resultado.id)
-      if (punto) {
-        setSelected(punto)
-        setSelectedType('punto_ref')
+  // Verificar si hay cliente resaltado en la URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const clienteId = urlParams.get('highlight')
+    if (clienteId && !highlightedClient) {
+      setHighlightedClient(parseInt(clienteId))
+      
+      // Enfocar mapa en el cliente
+      const cliente = clientes.find(c => c.id === parseInt(clienteId))
+      if (cliente && cliente.latitud && cliente.longitud && mapObj.current) {
+        mapObj.current.setView([cliente.latitud, cliente.longitud], 16)
+        
+        // Abrir popup del cliente
+        setTimeout(() => {
+          const marker = markersRef.current.find(m => {
+            const pos = m.getLatLng()
+            return Math.abs(pos.lat - cliente.latitud) < 0.0001 && Math.abs(pos.lng - cliente.longitud) < 0.0001
+          })
+          if (marker) marker.openPopup()
+        }, 500)
       }
     }
+  }, [clientes, highlightedClient])
+
+  // Función para manejar clic en resultado de búsqueda
+  const handleSearchResultClick = (result) => {
+    if (!result.data.latitud || !result.data.longitud) return
     
-    // Cerrar resultados de búsqueda
-    setMostrarResultados(false)
-    setBusquedaGlobal('')
+    mapObj.current.setView([result.data.latitud, result.data.longitud], 17)
+    setSearchTerm('')
+    setShowSearch(false)
+    
+    // Abrir popup del marcador
+    setTimeout(() => {
+      const marker = markersRef.current.find(m => {
+        const pos = m.getLatLng()
+        return Math.abs(pos.lat - result.data.latitud) < 0.0001 && Math.abs(pos.lng - result.data.longitud) < 0.0001
+      })
+      if (marker) marker.openPopup()
+    }, 300)
   }
 
-  // ─── Cargar Leaflet CSS+JS dinámicamente ───────────────────────
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (window.L) { setLeafletReady(true); return }
-
-    const link = document.createElement('link')
-    link.rel  = 'stylesheet'
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-    document.head.appendChild(link)
-
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-    script.async = true
-    script.onload = () => {
-      leafletRef.current = window.L
-      setLeafletReady(true)
+  // Función para manejar medición de distancias
+  const handleMapClickMeasure = useCallback((e) => {
+    if (!medirDistancia) return
+    
+    const newPoint = [e.latlng.lat, e.latlng.lng]
+    const newRuta = [...rutaPuntos, newPoint]
+    setRutaPuntos(newRuta)
+    
+    // Calcular distancia total
+    if (newRuta.length > 1) {
+      const total = calcularDistanciaRuta(newRuta)
+      setDistanciaTotal(total)
     }
-    document.head.appendChild(script)
-  }, [])
-
-  // ─── Inicializar mapa ──────────────────────────────────────────
-  useEffect(() => {
-    if (!leafletReady || !mapRef.current || mapObj.current) return
-    const L = window.L
-
-    const map = L.map(mapRef.current, {
-      center: [BAR_LAT, BAR_LNG],
-      zoom: 13,
-      zoomControl: true,
-    })
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map)
-
-    map.on('click', (e) => {
-      if (medidorActivoRef.current) {
-        setMedidor(prev => {
-          const nuevosPuntos = [...prev.puntos, [e.latlng.lat, e.latlng.lng]]
-          const distanciaTotal = calcularDistanciaRuta(nuevosPuntos)
-          return { ...prev, puntos: nuevosPuntos, distanciaTotal }
-        })
-        return
-      }
-      if (canWrite) {
-        setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
-      }
-    })
-
-    // Click derecho para menú contextual
-    map.on('contextmenu', handleMapRightClick)
-
-    mapObj.current = map
-  }, [leafletReady, canWrite])
-
-  // ─── Dibujar markers ──────────────────────────────────────────
-  useEffect(() => {
-    if (!mapObj.current || !leafletReady || loading) return
-    const L = window.L
-
-    // Limpiar markers previos
-    markersRef.current.forEach(m => m.remove())
-    markersRef.current = []
-
-    // ─── CLIENTES ────────────────
-    const conCoords = clientes.filter(c => c.latitud && c.longitud)
-    conCoords.forEach(c => {
-      const cfg  = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
-      const plan = planes.find(p => p.id === c.plan_id)
-      const tieneAlerta = reportes.some(r => r.cliente_id === c.id && r.estado === 'abierto')
-      
-      const icon = L.icon({
-        iconUrl:    tieneAlerta ? makeSvgPin('#dc2626', 'alert', { width: 32, height: 42 }) : makeSvgPin(cfg.pin, 'default'),
-        iconSize:   tieneAlerta ? [32, 42] : [32, 42],
-        iconAnchor: tieneAlerta ? [16, 42] : [16, 42],
-        popupAnchor:tieneAlerta ? [0, -44] : [0, -44],
-      })
-
-      const marker = L.marker([Number(c.latitud), Number(c.longitud)], { 
-        icon, 
-        title: c.nombre_razon_social,
-        zIndexOffset: clienteResaltado === c.id ? 1000 : 0
-      })
-
-      marker.bindPopup(`
-        <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
-          <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:4px">${c.nombre_razon_social}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:8px">${c.documento_identidad || ''}</div>
-          ${tieneAlerta ? `<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:8px;border-radius:4px;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#dc2626">⚠️ CLIENTE CON ALERTA</span><div style="font-size:10px;color:#7f1d1d;margin-top:4px">${reportes.filter(r => r.cliente_id === c.id && r.estado === 'abierto').length} reporte(s) abierto(s)</div></div>` : ''}
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-            <span style="background:${cfg.bg};color:${cfg.txt};padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid ${cfg.ring}">${c.estado_servicio}</span>
-            ${plan ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600">${plan.nombre_plan}</span>` : ''}
-          </div>
-          ${c.telefono ? `<div style="font-size:12px;color:#374151;margin-top:4px">📞 ${c.telefono}</div>` : ''}
-          ${c.zona_sector ? `<div style="font-size:12px;color:#94a3b8">📍 ${c.zona_sector}</div>` : ''}
-          ${c.direccion_ubicacion ? `<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic">${c.direccion_ubicacion}</div>` : ''}
-        </div>
-      `, { maxWidth: 300 })
-
-      // Animación de resaltado para cliente específico
-      if (clienteResaltado === c.id) {
-        const pulseIcon = L.icon({
-          iconUrl: makeSvgPin('#dc2626', 'alert', { width: 40, height: 52 }),
-          iconSize: [40, 52],
-          iconAnchor: [20, 52],
-          popupAnchor: [0, -54],
-        })
-        
-        // Crear marcador pulsante
-        const pulseMarker = L.marker([Number(c.latitud), Number(c.longitud)], { 
-          icon: pulseIcon,
-          zIndexOffset: 2000
-        }).addTo(mapObj.current)
-        
-        // Animación de pulso
-        let scale = 1
-        let growing = true
-        const pulseInterval = setInterval(() => {
-          if (growing) {
-            scale += 0.05
-            if (scale >= 1.2) growing = false
-          } else {
-            scale -= 0.05
-            if (scale <= 1) growing = true
-          }
-          
-          pulseMarker.setZIndexOffset(2000)
-        }, 200)
-        
-        // Limpiar después de 8 segundos
-        setTimeout(() => {
-          clearInterval(pulseInterval)
-          pulseMarker.remove()
-        }, 8000)
-        
-        markersRef.current.push(pulseMarker)
-      }
-      if (showMode === 'clientes') marker.addTo(mapObj.current)
-      markersRef.current.push(marker)
-    })
-
-    // ─── ANTENAS ────────────────
-    antenas.forEach(a => {
-      const iconAddr = L.icon({
-        iconUrl:    makeSvgPin(ICON_TYPES.antena.color, 'antena', { width: 32, height: 40 }),
-        iconSize:   [32, 40],
-        iconAnchor: [16, 40],
-        popupAnchor:[0, -42],
-      })
-
-      const marker = L.marker([Number(a.latitud), Number(a.longitud)], { 
-        icon: iconAddr, 
-        title: a.nombre,
-        zIndexOffset: 100,
-      })
-
-      marker.bindPopup(`
-        <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
-          <div style="font-weight:700;font-size:13px;color:#2563eb;margin-bottom:4px">📡 ${a.nombre}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:6px">${a.ubicacion_descripcion || ''}</div>
-          ${a.banda_frecuencia ? `<div style="font-size:11px;color:#334151">Banda: ${a.banda_frecuencia}</div>` : ''}
-          ${a.alcance_approx_metros ? `<div style="font-size:11px;color:#334151">Alcance: ${a.alcance_approx_metros}m</div>` : ''}
-          ${a.nota_tecnica ? `<div style="font-size:10px;color:#64748b;margin-top:4px;font-style:italic">${a.nota_tecnica}</div>` : ''}
-        </div>
-      `, { maxWidth: 260 })
-
-      marker.on('click', () => { setSelected(a); setSelectedType('antena') })
-      if (showMode === 'antenas') marker.addTo(mapObj.current)
-      markersRef.current.push(marker)
-    })
-
-    // ─── PUNTOS DE REFERENCIA ────────────────
-    puntosRef.forEach(s => {
-      const iconAddr = L.icon({
-        iconUrl:    makeSvgPin(ICON_TYPES.punto_ref.color, 'punto', { width: 32, height: 36 }),
-        iconSize:   [32, 36],
-        iconAnchor: [16, 36],
-        popupAnchor:[0, -38],
-      })
-
-      const marker = L.marker([Number(s.latitud), Number(s.longitud)], { 
-        icon: iconAddr, 
-        title: s.nombre,
-        zIndexOffset: 100,
-      })
-
-      marker.bindPopup(`
-        <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
-          <div style="font-weight:700;font-size:13px;color:#f59e0b;margin-bottom:4px">🍔 ${s.nombre}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:6px">${s.ubicacion_descripcion || ''}</div>
-          ${s.contacto_telefono ? `<div style="font-size:11px;color:#334151">📞 ${s.contacto_telefono}</div>` : ''}
-          ${s.horario_atencion ? `<div style="font-size:11px;color:#334151">⏰ ${s.horario_atencion}</div>` : ''}
-          ${s.nota_especial ? `<div style="font-size:10px;color:#64748b;margin-top:4px">${s.nota_especial}</div>` : ''}
-        </div>
-      `, { maxWidth: 260 })
-
-      marker.on('click', () => { setSelected(s); setSelectedType('punto_ref') })
-      if (showMode === 'puntos_ref') marker.addTo(mapObj.current)
-      markersRef.current.push(marker)
-    })
-
-    // Ajustar bounds si hay markers visibles
-    const markersVisibles = markersRef.current.filter(m => m._map === mapObj.current)
-    if (markersVisibles.length > 0) {
-      const group = L.featureGroup(markersVisibles)
-      mapObj.current.fitBounds(group.getBounds().pad(0.15))
-    }
-  }, [clientes, antenas, puntosRef, planes, reportes, leafletReady, loading, showMode])
-
-  // ─── Sincronizar ref con state del medidor ───
-  useEffect(() => {
-    medidorActivoRef.current = medidor.activo
-  }, [medidor.activo])
-
-  // ─── Menú contextual del mapa ─────────────────────────────────
-  const handleMapRightClick = useCallback((e) => {
-    e.originalEvent.preventDefault()
-    setContextMenu({
-      x: e.originalEvent.clientX,
-      y: e.originalEvent.clientY
-    })
-    setContextCoords({
-      lat: e.latlng.lat,
-      lng: e.latlng.lng
-    })
-  }, [])
-
-  const cerrarContextMenu = useCallback(() => {
-    setContextMenu(null)
-    setContextCoords(null)
-  }, [])
-
-  // Cerrar menú al hacer clic fuera
-  useEffect(() => {
-    const handleClick = () => cerrarContextMenu()
-    if (contextMenu) {
-      document.addEventListener('click', handleClick)
-      return () => document.removeEventListener('click', handleClick)
-    }
-  }, [contextMenu, cerrarContextMenu])
-
-  // ─── Renderizar polilínea del medidor ────
-  useEffect(() => {
-    if (!mapObj.current || !leafletReady) return
-    const L = window.L
-
-    if (polylineRef.current) {
-      polylineRef.current.forEach(layer => layer.remove())
-      polylineRef.current = null
-    }
-
-    if (medidor.puntos.length < 1) return
-
-    const layers = []
-
-    if (medidor.puntos.length > 1) {
-      const poly = L.polyline(medidor.puntos, {
-        color: '#16a34a',
+    
+    // Dibujar línea si hay más de un punto
+    if (newRuta.length > 1 && window.L) {
+      const L = window.L
+      const polyline = L.polyline(newRuta, {
+        color: '#00ff88',
         weight: 3,
-        opacity: 0.85,
-        dashArray: '8, 5',
+        opacity: 0.8,
+        dashArray: '10, 5'
       }).addTo(mapObj.current)
-      layers.push(poly)
-    }
-
-    medidor.puntos.forEach((punto, idx) => {
-      const circle = L.circleMarker(punto, {
+      
+      // Agregar marcador en el último punto
+      L.circleMarker(newPoint[newPoint.length - 1], {
         radius: 6,
-        fillColor: '#16a34a',
+        fillColor: '#00ff88',
         color: '#fff',
         weight: 2,
         opacity: 1,
-        fillOpacity: 0.9,
-        zIndexOffset: 500,
+        fillOpacity: 0.8
       }).addTo(mapObj.current)
-       .bindTooltip(`Punto ${idx + 1}`, { permanent: false, direction: 'top' })
-      layers.push(circle)
-    })
+    }
+  }, [medirDistancia, rutaPuntos])
 
-    polylineRef.current = layers
-  }, [medidor.puntos, leafletReady])
-
-  // ─── Guardar coordenadas ───────────────────────────────────────
-  async function guardarUbicacion() {
-    if (!selected || !editCoord) return
-    setSaving(true)
-    try {
-      if (selectedType === 'cliente') {
-        await api.patch('/api/clientes', {
-          id: selected.id,
-          latitud:  editCoord.lat,
-          longitud: editCoord.lng,
-        })
-        await alertaExito('Ubicación guardada', `${selected.nombre_razon_social} ubicado correctamente`)
-      } else if (selectedType === 'antena') {
-        await api.patch('/api/antenas', {
-          id: selected.id,
-          latitud:  editCoord.lat,
-          longitud: editCoord.lng,
-        })
-        await alertaExito('Antena reubicada', `${selected.nombre} movida correctamente`)
-      } else if (selectedType === 'punto_ref') {
-        await api.patch('/api/snacks', {
-          id: selected.id,
-          latitud:  editCoord.lat,
-          longitud: editCoord.lng,
-        })
-        await alertaExito('Punto reubicado', `${selected.nombre} movido correctamente`)
+  // Agregar evento click para medición
+  useEffect(() => {
+    if (!mapObj.current) return
+    
+    if (medirDistancia) {
+      mapObj.current.on('click', handleMapClickMeasure)
+      mapObj.current.getContainer().style.cursor = 'crosshair'
+    } else {
+      mapObj.current.off('click', handleMapClickMeasure)
+      mapObj.current.getContainer().style.cursor = ''
+    }
+    
+    return () => {
+      if (mapObj.current) {
+        mapObj.current.off('click', handleMapClickMeasure)
+        mapObj.current.getContainer().style.cursor = ''
       }
+    }
+  }, [medirDistancia, handleMapClickMeasure])
+
+  // Función para limpiar medición
+  const limpiarMedicion = useCallback(() => {
+    setRutaPuntos([])
+    setDistanciaTotal(0)
+    setMedirDistancia(false)
+    
+    // Limpiar capas de medición del mapa
+    if (mapObj.current && window.L) {
+      mapObj.current.eachLayer((layer) => {
+        if (layer instanceof window.L.Polyline || layer instanceof window.L.CircleMarker) {
+          mapObj.current.removeLayer(layer)
+        }
+      })
+    }
+  }, [])
+
+  // Función para actualizar ubicación de cliente
+  const actualizarUbicacionCliente = async (clienteId, lat, lng) => {
+    try {
+      await api(`/clientes/${clienteId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ latitud: lat, longitud: lng })
+      })
+      
+      // Actualizar estado local
+      setClientes(prev => prev.map(c => 
+        c.id === clienteId ? { ...c, latitud: lat, longitud: lng } : c
+      ))
+      
+      alertaExito('Ubicación actualizada correctamente')
       setEditCoord(null)
-      setSelected(null)
-      await cargar()
-    } catch(e) { await alertaError('Error', e.message) }
-    finally { setSaving(false) }
+    } catch (error) {
+      console.error('Error actualizando ubicación:', error)
+      alertaError('Error al actualizar la ubicación')
+    }
   }
 
-  async function eliminarUbicacion() {
-    if (!selected || !confirm('¿Estás seguro de que deseas eliminar esta ubicación?')) return
-    setSaving(true)
+  // Función para crear antena
+  const crearAntena = async () => {
     try {
-      if (selectedType === 'antena') {
-        await api.delete(`/api/antenas?id=${selected.id}`)
-        await alertaExito('Antena eliminada')
-      } else if (selectedType === 'punto_ref') {
-        await api.delete(`/api/snacks?id=${selected.id}`)
-        await alertaExito('Punto de referencia eliminado')
+      const antenaData = {
+        ...nuevaAntena,
+        latitud: contextMenu.lat,
+        longitud: contextMenu.lng
       }
-      setSelected(null)
-      await cargar()
-    } catch(e) { await alertaError('Error', e.message) }
-    finally { setSaving(false) }
-  }
-
-  function volarA(c) {
-    if (!mapObj.current || !c.latitud) return
-    mapObj.current.flyTo([Number(c.latitud), Number(c.longitud)], 16, { duration: 1 })
-    setSelected(c)
-  }
-
-  async function crearAntena() {
-    if (!formData.nombre || formData.nombre.trim() === '') {
-      await alertaError('Error', 'El nombre es requerido')
-      return
-    }
-    setFormSaving(true)
-    try {
-      const res = await api.post('/api/antenas', {
-        nombre: formData.nombre,
-        latitud: formData.latitud || BAR_LAT,
-        longitud: formData.longitud || BAR_LNG,
-        ubicacion_descripcion: formData.ubicacion_descripcion || '',
-        banda_frecuencia: formData.banda_frecuencia || '',
-        potencia_watts: formData.potencia_watts || null,
-        alcance_approx_metros: formData.alcance_approx_metros || null,
-        nota_tecnica: formData.nota_tecnica || '',
+      
+      await api('/antenas', {
+        method: 'POST',
+        body: JSON.stringify(antenaData)
       })
-      await alertaExito('¡Listo!', 'Antena creada correctamente')
-      setModalForm(null)
-      setFormData({})
-      await cargar()
-    } catch(e) { await alertaError('Error', e.message) }
-    finally { setFormSaving(false) }
-  }
-
-  async function crearPuntoRef() {
-    if (!formData.nombre || formData.nombre.trim() === '') {
-      await alertaError('Error', 'El nombre es requerido')
-      return
-    }
-    setFormSaving(true)
-    try {
-      const res = await api.post('/api/snacks', {
-        nombre: formData.nombre,
-        latitud: formData.latitud || BAR_LAT,
-        longitud: formData.longitud || BAR_LNG,
-        ubicacion_descripcion: formData.ubicacion_descripcion || '',
-        // Los demás campos quedan vacíos o null
-        contacto_telefono: '',
-        horario_atencion: '',
-        nota_especial: '',
+      
+      // Actualizar estado local
+      setAntenas(prev => [...prev, { ...antenaData, id: Date.now() }])
+      
+      alertaExito('Antena creada correctamente')
+      setShowModalAntena(false)
+      setNuevaAntena({
+        nombre: '',
+        latitud: 0,
+        longitud: 0,
+        banda_frecuencia: '',
+        potencia_watts: '',
+        alcance_approx_metros: '',
+        ubicacion_descripcion: '',
+        nota_tecnica: ''
       })
-      await alertaExito('¡Listo!', 'Punto de referencia creado correctamente')
-      setModalForm(null)
-      setFormData({})
-      await cargar()
-    } catch(e) { await alertaError('Error', e.message) }
-    finally { setFormSaving(false) }
+      setContextMenu(null)
+    } catch (error) {
+      console.error('Error creando antena:', error)
+      alertaError('Error al crear la antena')
+    }
   }
 
-  const sinUbicacion  = clientes.filter(c => !c.latitud || !c.longitud)
-  const conUbicacion  = clientes.filter(c => c.latitud && c.longitud)
-  const filtradosSin  = sinUbicacion.filter(c => {
-    const q = busqueda.toLowerCase()
-    return (!q || c.nombre_razon_social?.toLowerCase().includes(q)) &&
-           (!filtro || c.estado_servicio === filtro)
-  })
+  // Función para crear punto de referencia
+  const crearPuntoRef = async () => {
+    try {
+      const puntoData = {
+        nombre: nuevoPunto.nombre,
+        latitud: contextMenu.lat,
+        longitud: contextMenu.lng,
+        ubicacion_descripcion: nuevoPunto.ubicacion_descripcion
+      }
+      
+      await api('/snacks', {
+        method: 'POST',
+        body: JSON.stringify(puntoData)
+      })
+      
+      // Actualizar estado local
+      setPuntosRef(prev => [...prev, { ...puntoData, id: Date.now() }])
+      
+      alertaExito('Punto de referencia creado correctamente')
+      setShowModalPunto(false)
+      setNuevoPunto({
+        nombre: '',
+        latitud: 0,
+        longitud: 0,
+        ubicacion_descripcion: ''
+      })
+      setContextMenu(null)
+    } catch (error) {
+      console.error('Error creando punto de referencia:', error)
+      alertaError('Error al crear el punto de referencia')
+    }
+  }
 
-  const statsPorEstado = Object.entries(ESTADO_COLOR).map(([estado, cfg]) => ({
-    estado, cfg,
-    total: clientes.filter(c => c.estado_servicio === estado).length
-  })).filter(s => s.total > 0)
+  // Función para manejar click derecho en mapa
+  const handleMapRightClick = (e) => {
+    setContextMenu({
+      lat: e.latlng.lat,
+      lng: e.latlng.lng,
+      x: e.originalEvent.clientX,
+      y: e.originalEvent.clientY
+    })
+  }
+
+  // Función para cerrar menú contextual
+  const cerrarContextMenu = () => {
+    setContextMenu(null)
+  }
+
+  // Cerrar menú contextual al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = () => cerrarContextMenu()
+    if (contextMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [contextMenu])
+
+  // Estadísticas
+  const stats = {
+    totalClientes: clientes.length,
+    clientesConUbicacion: clientes.filter(c => c.latitud && c.longitud).length,
+    clientesActivos: clientes.filter(c => c.estado_servicio === 'Activo').length,
+    clientesDeudores: clientes.filter(c => c.estado_servicio === 'Deudor').length,
+    totalAntenas: antenas.length,
+    totalPuntosRef: puntosRef.length,
+    reportesActivos: reportes.filter(r => r.estado === 'abierto').length
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 'calc(100vh - 60px)',
+        background: 'var(--surface)'
+      }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          border: '3px solid var(--outline-variant)',
+          borderTop: '3px solid var(--primary)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}/>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      {/* ── Estilos Leaflet override ─────────────────────────────── */}
-      <style>{`
-        .leaflet-container { font-family: Inter, system-ui, sans-serif; border-radius: 16px; }
-        .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important; border: 1px solid #e2e8f0; }
-        .leaflet-popup-tip-container { display: none; }
-        .leaflet-control-attribution { font-size: 10px !important; }
-        .leaflet-control-zoom a { border-radius: 8px !important; }
-        .gn-map-selected-banner {
-          position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-          background: #0f172a; color: #fff; border-radius: 10px;
-          padding: 8px 18px; font-size: 12px; font-weight: 500;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.3); white-space: nowrap;
-          z-index: 800; pointer-events: none;
+    <>
+      <style jsx>{`
+        .mapa-container {
+          position: relative;
+          background: var(--surface);
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          border: 1px solid var(--outline-variant);
+          height: calc(100vh - 140px);
+          min-height: 600px;
         }
-        .gn-search-container {
-          position: absolute; top: 14px; right: 14px; z-index: 500;
+
+        .search-container {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          z-index: 1000;
           width: 320px;
         }
-        .gn-search-input {
-          width: 100%; padding: 10px 14px; font-size: 13px;
-          border: 2px solid #e2e8f0; border-radius: 12px;
-          background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-          box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+        .search-input {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid var(--outline-variant);
+          border-radius: 16px;
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          color: var(--on-surface);
+          font-size: 14px;
+          font-family: 'Inter', sans-serif;
+          outline: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 16px var(--shadow-color);
+        }
+
+        .search-input:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 4px rgba(0, 107, 44, 0.1), 0 8px 24px var(--shadow-color);
+          transform: translateY(-1px);
+        }
+
+        .search-input::placeholder {
+          color: var(--on-surface-variant);
+        }
+
+        .search-results {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          right: 0;
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          max-height: 320px;
+          overflow-y: auto;
+          z-index: 1001;
+        }
+
+        .search-result-item {
+          padding: 12px 16px;
+          cursor: pointer;
           transition: all 0.2s;
+          border-bottom: 1px solid var(--outline-variant);
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
-        .gn-search-input:focus {
-          outline: none; border-color: #16a34a;
-          box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
-        }
-        .gn-search-results {
-          position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-          background: #fff; border-radius: 12px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-          border: 1px solid #e2e8f0; max-height: 320px; overflow-y: auto;
-          z-index: 600;
-        }
-        .gn-search-result-item {
-          padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
-          cursor: pointer; transition: background 0.15s;
-          display: flex; align-items: center; gap: 10px;
-        }
-        .gn-search-result-item:hover {
-          background: #f8fafc;
-        }
-        .gn-search-result-item:last-child {
+
+        .search-result-item:last-child {
           border-bottom: none;
         }
-        .gn-search-result-icon {
-          width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+
+        .search-result-item:hover {
+          background: var(--surface-container);
+          transform: translateX(4px);
         }
-        .gn-search-result-content {
-          flex: 1; min-width: 0;
-        }
-        .gn-search-result-title {
-          font-size: 13px; font-weight: 600; color: #0f172a;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .gn-search-result-subtitle {
-          font-size: 11px; color: #64748b;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .gn-search-result-badge {
-          font-size: 10px; padding: 2px 8px; border-radius: 10px;
-          font-weight: 600; text-transform: uppercase;
+
+        .search-result-icon {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
           flex-shrink: 0;
         }
+
+        .search-result-content {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .search-result-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--on-surface);
+          margin-bottom: 2px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .search-result-subtitle {
+          font-size: 11px;
+          color: var(--on-surface-variant);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .controls-panel {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .control-group {
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          min-width: 200px;
+        }
+
+        .control-title {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--on-surface-variant);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 12px;
+        }
+
+        .control-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+
+        .control-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .control-label {
+          font-size: 13px;
+          color: var(--on-surface);
+        }
+
+        .toggle-switch {
+          position: relative;
+          width: 44px;
+          height: 24px;
+          background: var(--surface-container-high);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+          background: var(--primary);
+        }
+
+        .toggle-switch::after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 20px;
+          height: 20px;
+          background: white;
+          border-radius: 50%;
+          transition: transform 0.3s;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+          transform: translateX(20px);
+        }
+
+        .btn-control {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: 'Inter', sans-serif;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .btn-primary {
+          background: var(--primary);
+          color: var(--on-primary);
+          box-shadow: 0 2px 8px rgba(0, 107, 44, 0.3);
+        }
+
+        .btn-primary:hover {
+          background: var(--primary-container);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(0, 107, 44, 0.35);
+        }
+
+        .btn-secondary {
+          background: var(--surface-container);
+          color: var(--on-surface);
+          border: 1px solid var(--outline-variant);
+        }
+
+        .btn-secondary:hover {
+          background: var(--surface-container-high);
+          transform: translateY(-1px);
+        }
+
+        .btn-danger {
+          background: var(--tertiary-container);
+          color: var(--on-tertiary);
+        }
+
+        .btn-danger:hover {
+          background: var(--tertiary);
+          transform: translateY(-1px);
+        }
+
+        .stats-panel {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          z-index: 1000;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 12px;
+          max-width: 600px;
+        }
+
+        .stat-card {
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        .stat-value {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--primary);
+          margin-bottom: 4px;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+          font-size: 11px;
+          color: var(--on-surface-variant);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .medicion-info {
+          position: absolute;
+          top: 80px;
+          left: 20px;
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          z-index: 1000;
+          min-width: 200px;
+        }
+
+        .medicion-value {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--primary);
+          margin-bottom: 8px;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .medicion-label {
+          font-size: 12px;
+          color: var(--on-surface-variant);
+          margin-bottom: 12px;
+        }
+
+        .coordinates-display {
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          padding: 12px 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          z-index: 1000;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          color: var(--on-surface-variant);
+        }
+
         .gn-context-menu {
-          position: fixed; background: #fff; border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
-          z-index: 1000; min-width: 180px; overflow: hidden;
+          position: fixed;
+          background: var(--glass-bg);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--outline-variant);
+          border-radius: 16px;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          z-index: 10000;
+          min-width: 200px;
+          padding: 8px;
+          animation: contextMenuAppear 0.2s ease-out;
         }
+
+        @keyframes contextMenuAppear {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
         .gn-context-menu-item {
-          padding: 12px 16px; cursor: pointer; transition: background 0.15s;
-          display: flex; align-items: center; gap: 10px; font-size: 13px;
-          color: #334155; border-bottom: 1px solid #f1f5f9;
+          padding: 10px 14px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 13px;
+          color: var(--on-surface);
+          border: none;
+          background: none;
+          width: 100%;
+          text-align: left;
         }
+
         .gn-context-menu-item:hover {
-          background: #f8fafc;
+          background: var(--surface-container);
+          transform: translateX(4px);
         }
-        .gn-context-menu-item:last-child {
-          border-bottom: none;
-        }
+
         .gn-context-menu-icon {
-          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          opacity: 0.7;
         }
+
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 300;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          animation: fadeIn 0.15s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .modal {
+          background: var(--surface-container-lowest);
+          border: 1px solid var(--outline-variant);
+          border-radius: 24px;
+          width: 100%;
+          max-width: 600px;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 60px var(--shadow-color);
+          animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .modal-header {
+          padding: 24px 28px 20px;
+          border-bottom: 1px solid var(--outline-variant);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .modal-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--on-surface);
+          letter-spacing: -0.5px;
+        }
+
+        .modal-close {
+          background: none;
+          border: none;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          cursor: pointer;
+          color: var(--on-surface-variant);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+          background: var(--surface-container);
+          color: var(--on-surface);
+        }
+
+        .modal-body {
+          padding: 24px 28px;
+        }
+
+        .modal-footer {
+          padding: 20px 28px;
+          border-top: 1px solid var(--outline-variant);
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 0.4;
+          }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
-          .gn-search-container {
+          .search-container {
             width: 280px;
-            right: 10px;
             top: 10px;
+            left: 10px;
           }
-          .gn-search-input {
-            font-size: 12px;
-            padding: 8px 12px;
+
+          .controls-panel {
+            top: 10px;
+            right: 10px;
           }
-          .gn-context-menu {
-            min-width: 160px;
-            font-size: 12px;
+
+          .stats-panel {
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            grid-template-columns: repeat(2, 1fr);
           }
-          .gn-context-menu-item {
-            padding: 10px 12px;
-            font-size: 12px;
+
+          .coordinates-display {
+            display: none;
           }
-          .gn-context-menu-icon {
-            font-size: 14px;
+
+          .medicion-info {
+            top: 70px;
+            left: 10px;
+            right: 10px;
           }
         }
       `}</style>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16, height:'calc(100vh - 130px)', minHeight:500 }}>
+      <div className="mapa-container">
+        {/* Mapa */}
+        <div 
+          ref={mapRef} 
+          style={{ width: '100%', height: '100%' }}
+        />
 
-        {/* ── Mapa ──────────────────────────────────────────────── */}
-        <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid #e2e8f0', boxShadow:'0 1px 8px rgba(0,0,0,0.07)' }}>
-          <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
-
-          {/* ─── BUSCADOR AVANZADO ───────────────────────────────── */}
-          <div className="gn-search-container">
-            <input
-              type="text"
-              className="gn-search-input"
-              placeholder="🔍 Buscar clientes, antenas o puntos..."
-              value={busquedaGlobal}
-              onChange={(e) => setBusquedaGlobal(e.target.value)}
-              onFocus={() => setBusquedaActiva(true)}
-              onBlur={() => setTimeout(() => setBusquedaActiva(false), 200)}
-            />
-            
-            {mostrarResultados && resultadosBusqueda.length > 0 && (
-              <div className="gn-search-results">
-                {resultadosBusqueda.map((resultado, idx) => (
-                  <div
-                    key={`${resultado.tipo}-${resultado.id}-${idx}`}
-                    className="gn-search-result-item"
-                    onClick={() => irAResultado(resultado)}
-                  >
-                    <div 
-                      className="gn-search-result-icon"
-                      style={{ background: resultado.color }}
-                    />
-                    <div className="gn-search-result-content">
-                      <div className="gn-search-result-title">{resultado.nombre}</div>
-                      <div className="gn-search-result-subtitle">{resultado.subtitulo}</div>
-                    </div>
-                    <span 
-                      className="gn-search-result-badge"
-                      style={{
-                        background: resultado.tipo === 'cliente' ? '#dcfce7' : 
-                                   resultado.tipo === 'antena' ? '#dbeafe' : '#fef3c7',
-                        color: resultado.tipo === 'cliente' ? '#166534' : 
-                               resultado.tipo === 'antena' ? '#1e40af' : '#92400e'
-                      }}
-                    >
-                      {resultado.tipo === 'cliente' ? 'Cliente' : 
-                       resultado.tipo === 'antena' ? 'Antena' : 'Punto'}
-                    </span>
+        {/* Buscador */}
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="🔍 Buscar clientes, antenas, puntos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setShowSearch(searchResults.length > 0)}
+          />
+          
+          {showSearch && (
+            <div className="search-results">
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  className="search-result-item"
+                  onClick={() => handleSearchResultClick(result)}
+                >
+                  <div 
+                    className="search-result-icon"
+                    style={{ backgroundColor: result.color }}
+                  />
+                  <div className="search-result-content">
+                    <div className="search-result-label">{result.label}</div>
+                    <div className="search-result-subtitle">{result.subtitle}</div>
                   </div>
-                ))}
-              </div>
-            )}
-            
-            {mostrarResultados && resultadosBusqueda.length === 0 && busquedaGlobal.length >= 2 && (
-              <div className="gn-search-results">
-                <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                  No se encontraron resultados
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Banner de edición/modo */}
-          {selected && canWrite && editCoord ? (
-            <div className="gn-map-selected-banner">
-              📍 Nueva posición seleccionada — guarda o cancela abajo
-            </div>
-          ) : selected && canWrite && selectedType === 'cliente' ? (
-            <div className="gn-map-selected-banner">
-              🖱️ {selected.nombre_razon_social} — haz clic en el mapa para mover
-            </div>
-          ) : null}
-
-          {/* Botones de modo (arriba) */}
-          <div style={{
-            position:'absolute', top:14, left:12, zIndex:500,
-            display:'flex', gap:6, flexDirection: 'row',
-            background:'rgba(247,249,251,0.96)', borderRadius:10,
-            padding:'6px', boxShadow:'0 2px 12px rgba(0,0,0,0.12)',
-            border:'1px solid #e2e8f0', backdropFilter:'blur(20px)',
-          }}>
-            <button 
-              onClick={() => { setShowMode('clientes'); setSelected(null) }}
-              style={{
-                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'clientes' ? '#16a34a' : '#fff',
-                color: showMode === 'clientes' ? '#fff' : '#334155',
-                cursor: 'pointer', transition: 'all .2s'
-              }}>
-              👥 Clientes
-            </button>
-            <button 
-              onClick={() => { setShowMode('antenas'); setSelected(null) }}
-              style={{
-                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'antenas' ? '#2563eb' : '#fff',
-                color: showMode === 'antenas' ? '#fff' : '#334155',
-                cursor: 'pointer', transition: 'all .2s'
-              }}>
-              📡 Antenas
-            </button>
-            <button 
-              onClick={() => { setShowMode('puntos_ref'); setSelected(null) }}
-              style={{
-                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'puntos_ref' ? '#f59e0b' : '#fff',
-                color: showMode === 'puntos_ref' ? '#fff' : '#334155',
-                cursor: 'pointer', transition: 'all .2s'
-              }}>
-              📍 Puntos
-            </button>
-            <div style={{ width:1, background:'#e2e8f0', opacity:0.3 }}></div>
-            <button
-              onClick={() => {
-                const nuevaActivo = !medidor.activo
-                medidorActivoRef.current = nuevaActivo
-                setMedidor(p => ({ ...p, activo: nuevaActivo, puntos: nuevaActivo ? p.puntos : [], distanciaTotal: nuevaActivo ? p.distanciaTotal : 0 }))
-              }}
-              style={{
-                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: medidor.activo ? '1px solid #bbf7d0' : 'none',
-                background: medidor.activo ? '#16a34a' : '#fff',
-                color: medidor.activo ? '#fff' : '#334155',
-                cursor: 'pointer', transition: 'all .2s'
-              }}>
-              📏 {medidor.activo ? 'Midiendo…' : 'Medir'}
-            </button>
-          </div>
-
-          {/* Leyenda — oculta cuando el medidor está activo */}
-          {!medidor.activo && (
-            <div style={{
-              position:'absolute', bottom:24, left:12, zIndex:500,
-              background:'rgba(255,255,255,0.96)', borderRadius:12,
-              padding:'10px 14px', boxShadow:'0 2px 12px rgba(0,0,0,0.12)',
-              border:'1px solid #e2e8f0', backdropFilter:'blur(4px)',
-            }}>
-              <div style={{ fontSize:10, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:8 }}>
-                Leyenda {showMode === 'clientes' ? '(Estado)' : ''}
-              </div>
-              {showMode === 'clientes' ? (
-                Object.entries(ESTADO_COLOR).map(([estado, cfg]) => (
-                  <div key={estado} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, marginBottom:5, color:'#334155' }}>
-                    <div style={{ width:10, height:10, borderRadius:'50%', background:cfg.pin, flexShrink:0, boxShadow:`0 0 0 2px ${cfg.ring}` }} />
-                    <span style={{ fontWeight:500 }}>{estado}</span>
-                  </div>
-                ))
-              ) : showMode === 'antenas' ? (
-                <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#334155' }}>
-                  <div style={{ width:10, height:10, borderRadius:'50%', background:'#2563eb', flexShrink:0 }} />
-                  <span style={{ fontWeight:500 }}>Torres de transmisión</span>
-                </div>
-              ) : (
-                <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#334155' }}>
-                  <div style={{ width:10, height:10, borderRadius:'50%', background:'#f59e0b', flexShrink:0 }} />
-                  <span style={{ fontWeight:500 }}>Puntos de venta</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Panel MEDIDOR activo */}
-          {medidor.activo && (
-            <div style={{
-              position:'absolute', bottom:24, left:12, zIndex:500,
-              background:'rgba(15,23,42,0.93)',
-              borderRadius:14,
-              padding:'14px 16px',
-              boxShadow:'0 8px 24px rgba(0,0,0,0.3)',
-              border:'1px solid rgba(255,255,255,0.08)',
-              backdropFilter:'blur(20px)',
-              minWidth:300,
-            }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.6)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10 }}>📏 Medidor de Distancia</div>
-              <div style={{ fontSize:24, color:'#bbf7d0', fontFamily:'JetBrains Mono,monospace', fontWeight:700, marginBottom:4 }}>
-                {(medidor.distanciaTotal / 1000).toFixed(3)} km
-              </div>
-              <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:14 }}>
-                {medidor.distanciaTotal.toFixed(0)} m · {medidor.puntos.length} punto{medidor.puntos.length !== 1 ? 's' : ''}
-              </div>
-              <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:14 }}>
-                Haz clic en el mapa para agregar puntos de medición
-              </div>
-              <div style={{ display:'flex', gap:8 }}>
-                <button
-                  onClick={() => setMedidor(p => ({ ...p, puntos: [], distanciaTotal: 0 }))}
-                  style={{ flex:1, padding:'8px 12px', fontSize:11, background:'rgba(254,137,131,0.2)', color:'#fca5a5', border:'1px solid rgba(254,137,131,0.3)', borderRadius:8, cursor:'pointer', fontWeight:600 }}>
-                  Limpiar
-                </button>
-                <button
-                  onClick={() => {
-                    alertaExito('Medición completada', `${medidor.distanciaTotal.toFixed(0)}m (${medidor.puntos.length} puntos)`)
-                    setMedidor({ activo: false, puntos: [], distanciaTotal: 0 })
-                    medidorActivoRef.current = false
-                  }}
-                  style={{ flex:1, padding:'8px 12px', fontSize:11, background:'#16a34a', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600 }}>
-                  Finalizar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Cargando overlay */}
-          {!leafletReady && (
-            <div style={{
-              position:'absolute', inset:0, display:'flex', alignItems:'center',
-              justifyContent:'center', background:'#f6f8fa', zIndex:600,
-            }}>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ width:36, height:36, border:'3px solid #e2e8f0', borderTop:'3px solid #16a34a', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 16px' }} />
-                <div style={{ fontSize:14, color:'#64748b' }}>Cargando mapa…</div>
-              </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* ── MENÚ CONTEXTUAL ─────────────────────────────────────── */}
-        {contextMenu && contextCoords && (
+        {/* Panel de Controles */}
+        <div className="controls-panel">
+          {/* Filtros */}
+          <div className="control-group">
+            <div className="control-title">Filtros</div>
+            
+            <div className="control-item">
+              <span className="control-label">Clientes</span>
+              <div 
+                className={`toggle-switch ${filters.clientes ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ ...prev, clientes: !prev.clientes }))}
+              />
+            </div>
+            
+            <div className="control-item">
+              <span className="control-label">Antenas</span>
+              <div 
+                className={`toggle-switch ${filters.antenas ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ ...prev, antenas: !prev.antenas }))}
+              />
+            </div>
+            
+            <div className="control-item">
+              <span className="control-label">Puntos Ref.</span>
+              <div 
+                className={`toggle-switch ${filters.puntosRef ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ ...prev, puntosRef: !prev.puntosRef }))}
+              />
+            </div>
+          </div>
+
+          {/* Herramientas */}
+          <div className="control-group">
+            <div className="control-title">Herramientas</div>
+            
+            <button
+              className={`btn-control ${medirDistancia ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => medirDistancia ? limpiarMedicion() : setMedirDistancia(true)}
+            >
+              📏 {medirDistancia ? 'Limpiar' : 'Medir'} Distancia
+            </button>
+            
+            {medirDistancia && (
+              <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--on-surface-variant)' }}>
+                Click en el mapa para medir
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Información de Medición */}
+        {medirDistancia && rutaPuntos.length > 0 && (
+          <div className="medicion-info">
+            <div className="medicion-value">
+              {distanciaTotal < 1000 
+                ? `${distanciaTotal.toFixed(1)} m`
+                : `${(distanciaTotal / 1000).toFixed(2)} km`
+              }
+            </div>
+            <div className="medicion-label">
+              {rutaPuntos.length} puntos marcados
+            </div>
+            <button
+              className="btn-control btn-danger"
+              onClick={limpiarMedicion}
+            >
+              🗑️ Limpiar
+            </button>
+          </div>
+        )}
+
+        {/* Panel de Estadísticas */}
+        <div className="stats-panel">
+          <div className="stat-card">
+            <div className="stat-value">{stats.totalClientes}</div>
+            <div className="stat-label">Clientes Totales</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{stats.clientesConUbicacion}</div>
+            <div className="stat-label">Con Ubicación</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{stats.clientesActivos}</div>
+            <div className="stat-label">Activos</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{stats.clientesDeudores}</div>
+            <div className="stat-label">Deudores</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{stats.totalAntenas}</div>
+            <div className="stat-label">Antenas</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{stats.totalPuntosRef}</div>
+            <div className="stat-label">Puntos Ref.</div>
+          </div>
+          
+          {stats.reportesActivos > 0 && (
+            <div className="stat-card" style={{ border: '2px solid var(--tertiary)' }}>
+              <div className="stat-value" style={{ color: 'var(--tertiary)' }}>
+                {stats.reportesActivos}
+              </div>
+              <div className="stat-label">Reportes Activos</div>
+            </div>
+          )}
+        </div>
+
+        {/* Coordenadas del Mouse */}
+        {editCoord && (
+          <div className="coordinates-display">
+            📍 {editCoord.lat.toFixed(6)}, {editCoord.lng.toFixed(6)}
+          </div>
+        )}
+
+        {/* Menú Contextual */}
+        {contextMenu && (
           <div 
             className="gn-context-menu"
             style={{
@@ -1032,427 +1365,228 @@ export default function MapaPage() {
               top: `${contextMenu.y}px`
             }}
           >
-            <div 
+            <button
               className="gn-context-menu-item"
               onClick={() => {
-                setFormData({
-                  nombre: '',
-                  latitud: contextCoords.lat,
-                  longitud: contextCoords.lng,
-                  ubicacion_descripcion: '',
-                  banda_frecuencia: '',
-                  potencia_watts: '',
-                  alcance_approx_metros: '',
-                  nota_tecnica: ''
-                })
-                setModalForm('nueva_antena')
+                setNuevaAntena(prev => ({ ...prev, latitud: contextMenu.lat, longitud: contextMenu.lng }))
+                setShowModalAntena(true)
                 cerrarContextMenu()
               }}
             >
-              <span className="gn-context-menu-icon">📡</span>
+              <span className="gn-context-menu-icon">🗼</span>
               Agregar Antena
-            </div>
-            <div 
+            </button>
+            
+            <button
               className="gn-context-menu-item"
               onClick={() => {
-                setFormData({
-                  nombre: '',
-                  latitud: contextCoords.lat,
-                  longitud: contextCoords.lng,
-                  ubicacion_descripcion: ''
-                })
-                setModalForm('nuevo_punto_ref')
+                setNuevoPunto(prev => ({ ...prev, latitud: contextMenu.lat, longitud: contextMenu.lng }))
+                setShowModalPunto(true)
                 cerrarContextMenu()
               }}
             >
               <span className="gn-context-menu-icon">📍</span>
-              Agregar Punto de Referencia
-            </div>
-            <div 
+              Agregar Punto Ref.
+            </button>
+            
+            <button
               className="gn-context-menu-item"
               onClick={() => {
-                navigator.clipboard.writeText(`${contextCoords.lat.toFixed(6)}, ${contextCoords.lng.toFixed(6)}`)
-                alertaExito('Coordenadas copiadas', 'Lat,Lng copiadas al portapapeles')
+                navigator.clipboard.writeText(`${contextMenu.lat}, ${contextMenu.lng}`)
+                alertaExito('Coordenadas copiadas')
                 cerrarContextMenu()
               }}
             >
               <span className="gn-context-menu-icon">📋</span>
               Copiar Coordenadas
-            </div>
-            <div 
+            </button>
+            
+            <button
               className="gn-context-menu-item"
               onClick={cerrarContextMenu}
             >
               <span className="gn-context-menu-icon">❌</span>
               Cancelar
+            </button>
+          </div>
+        )}
+
+        {/* Modal para Nueva Antena */}
+        {showModalAntena && (
+          <div className="modal-backdrop" onClick={() => setShowModalAntena(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">🗼 Nueva Antena</h2>
+                <button className="modal-close" onClick={() => setShowModalAntena(false)}>
+                  ✕
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <div className="form-row" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Nombre</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={nuevaAntena.nombre}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, nombre: e.target.value }))}
+                      placeholder="Nombre de la antena"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row cols-2" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Banda Frecuencia</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={nuevaAntena.banda_frecuencia}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, banda_frecuencia: e.target.value }))}
+                      placeholder="Ej: 2.4 GHz"
+                    />
+                  </div>
+                  
+                  <div className="field-group">
+                    <label className="field-label">Potencia (Watts)</label>
+                    <input
+                      type="number"
+                      className="input"
+                      value={nuevaAntena.potencia_watts}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, potencia_watts: e.target.value }))}
+                      placeholder="Ej: 100"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row cols-2" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Alcance (metros)</label>
+                    <input
+                      type="number"
+                      className="input"
+                      value={nuevaAntena.alcance_approx_metros}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, alcance_approx_metros: e.target.value }))}
+                      placeholder="Ej: 500"
+                    />
+                  </div>
+                  
+                  <div className="field-group">
+                    <label className="field-label">Coordenadas</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`}
+                      disabled
+                      style={{ background: 'var(--surface-container)' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Descripción Ubicación</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={nuevaAntena.ubicacion_descripcion}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, ubicacion_descripcion: e.target.value }))}
+                      placeholder="Descripción de la ubicación"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="field-group">
+                    <label className="field-label">Nota Técnica</label>
+                    <textarea
+                      className="input"
+                      value={nuevaAntena.nota_tecnica}
+                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, nota_tecnica: e.target.value }))}
+                      placeholder="Notas técnicas adicionales"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setShowModalAntena(false)}>
+                  Cancelar
+                </button>
+                <button className="btn btn-primary" onClick={crearAntena}>
+                  Crear Antena
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── Panel lateral ─────────────────────────────────────── */}
-        <div style={{ display:'flex', flexDirection:'column', gap:12, overflow:'hidden' }}>
-
-          {/* Stats por estado (solo para clientes) */}
-          {showMode === 'clientes' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Resumen</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
-                <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, padding:'10px 12px' }}>
-                  <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>En mapa</div>
-                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#16a34a', fontWeight:700 }}>{conUbicacion.length}</div>
-                </div>
-                <div style={{ background:'#fef9c3', border:'1px solid #fde68a', borderRadius:10, padding:'10px 12px' }}>
-                  <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>Sin ubicar</div>
-                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#d97706', fontWeight:700 }}>{sinUbicacion.length}</div>
-                </div>
-              </div>
-              {statsPorEstado.map(({ estado, cfg, total }) => (
-                <div key={estado} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:7, fontSize:12, color:'#334155' }}>
-                    <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.pin }} />
-                    {estado}
-                  </div>
-                  <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:12, fontWeight:700, color:cfg.txt, background:cfg.bg, padding:'1px 8px', borderRadius:10 }}>{total}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Stats para antenas */}
-          {showMode === 'antenas' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Antenas</div>
-              <div style={{ fontSize:12, color:'#334155' }}>
-                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'JetBrains Mono', fontWeight:700, color:'#2563eb' }}>{antenas.length}</span></div>
-                <div style={{ fontSize:11, color:'#64748b' }}>Haz clic en una antena para ver detalles</div>
-              </div>
-              {canWrite && (
-                <button 
-                  onClick={() => setModalForm('nueva_antena')}
-                  style={{ width:'100%', marginTop:8, padding:'8px 12px', fontSize:11, background:'#2563eb', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600 }}>
-                  + Nueva Antena
+        {/* Modal para Nuevo Punto de Referencia */}
+        {showModalPunto && (
+          <div className="modal-backdrop" onClick={() => setShowModalPunto(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">📍 Nuevo Punto de Referencia</h2>
+                <button className="modal-close" onClick={() => setShowModalPunto(false)}>
+                  ✕
                 </button>
-              )}
-            </div>
-          )}
-
-          {/* Stats para puntos de referencia */}
-          {showMode === 'puntos_ref' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Puntos de Referencia</div>
-              <div style={{ fontSize:12, color:'#334155' }}>
-                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'JetBrains Mono', fontWeight:700, color:'#f59e0b' }}>{puntosRef.length}</span></div>
-                <div style={{ fontSize:11, color:'#64748b' }}>Haz clic en un punto para ver detalles</div>
-              </div>
-              {canWrite && (
-                <button 
-                  onClick={() => setModalForm('nuevo_punto_ref')}
-                  style={{ width:'100%', marginTop:8, padding:'8px 12px', fontSize:11, background:'#f59e0b', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600 }}>
-                  + Nuevo Punto
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Panel elemento seleccionado */}
-          {selected && (
-            <div style={{ 
-              background: selectedType === 'cliente' ? '#f0fdf4' : selectedType === 'antena' ? '#eff6ff' : '#fef3c7', 
-              border: selectedType === 'cliente' ? '1px solid #bbf7d0' : selectedType === 'antena' ? '1px solid #dbeafe' : '1px solid #fde68a', 
-              borderRadius:14, padding:16, flexShrink:0 
-            }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#0f172a', lineHeight:1.3 }}>
-                  {selectedType === 'cliente' ? selected.nombre_razon_social : selected.nombre}
-                </div>
-                <button onClick={() => { setSelected(null); setEditCoord(null) }}
-                  style={{ background:'none', border:'none', cursor:'pointer', color:'#94a3b8', fontSize:18, lineHeight:1, padding:0, width:24, height:24, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
               </div>
               
-              {selectedType === 'cliente' && (
-                <>
-                  <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>
-                    {selected.documento_identidad && <span>{selected.documento_identidad} · </span>}
-                    <span style={{ color: ESTADO_COLOR[selected.estado_servicio]?.txt || '#64748b', fontWeight:600 }}>{selected.estado_servicio}</span>
+              <div className="modal-body">
+                <div className="form-row" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Nombre</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={nuevoPunto.nombre}
+                      onChange={(e) => setNuevoPunto(prev => ({ ...prev, nombre: e.target.value }))}
+                      placeholder="Nombre del punto de referencia"
+                    />
                   </div>
-                  {editCoord ? (
-                    <div>
-                      <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#16a34a', marginBottom:10, background:'#fff', borderRadius:8, padding:'8px 12px', border:'1px solid #bbf7d0' }}>
-                        Lat: {editCoord.lat.toFixed(6)}<br/>
-                        Lon: {editCoord.lng.toFixed(6)}
-                      </div>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <button className="btn btn-primary btn-sm" onClick={guardarUbicacion} disabled={saving} style={{ fontSize:11, flex:1 }}>
-                          {saving ? 'Guardando…' : '💾 Guardar'}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)} style={{ fontSize:11 }}>Cancelar</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      {selected.latitud && (
-                        <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'#64748b', marginBottom:8 }}>
-                          {Number(selected.latitud).toFixed(5)}, {Number(selected.longitud).toFixed(5)}
-                        </div>
-                      )}
-                      {canWrite && (
-                        <button className="btn btn-ghost btn-sm" style={{ width:'100%', justifyContent:'center', fontSize:11 }}
-                          onClick={() => setEditCoord(selected.latitud ? { lat: Number(selected.latitud), lng: Number(selected.longitud) } : null)}>
-                          📍 {selected.latitud ? 'Mover pin en mapa' : 'Haz clic en el mapa para ubicar'}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {selectedType === 'antena' && (
-                <>
-                  <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>
-                    {selected.ubicacion_descripcion || 'Sin descripción'}
-                  </div>
-                  {selected.banda_frecuencia && (
-                    <div style={{ fontSize:11, color:'#334155', marginBottom:4 }}>📡 Banda: {selected.banda_frecuencia}</div>
-                  )}
-                  {selected.alcance_approx_metros && (
-                    <div style={{ fontSize:11, color:'#334155', marginBottom:4 }}>📏 Alcance: {selected.alcance_approx_metros}m</div>
-                  )}
-                  {selected.potencia_watts && (
-                    <div style={{ fontSize:11, color:'#334155', marginBottom:4 }}>⚡ Potencia: {selected.potencia_watts}W</div>
-                  )}
-                  {editCoord ? (
-                    <div>
-                      <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#2563eb', marginBottom:10, background:'#fff', borderRadius:8, padding:'8px 12px', border:'1px solid #dbeafe' }}>
-                        Lat: {editCoord.lat.toFixed(6)}<br/>
-                        Lon: {editCoord.lng.toFixed(6)}
-                      </div>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <button className="btn btn-primary btn-sm" onClick={guardarUbicacion} disabled={saving} style={{ fontSize:11, flex:1 }}>
-                          {saving ? 'Guardando…' : '💾 Guardar'}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)} style={{ fontSize:11 }}>Cancelar</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display:'flex', gap:8, marginTop:8 }}>
-                      {canWrite && (
-                        <>
-                          <button className="btn btn-ghost btn-sm" style={{ flex:1, fontSize:11 }}
-                            onClick={() => setEditCoord({ lat: Number(selected.latitud), lng: Number(selected.longitud) })}>
-                            📍 Mover
-                          </button>
-                          <button className="btn btn-ghost btn-sm" onClick={eliminarUbicacion} style={{ fontSize:11, color:'#dc2626' }}>
-                            🗑️ Eliminar
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {selectedType === 'punto_ref' && (
-                <>
-                  <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>
-                    {selected.ubicacion_descripcion || 'Sin descripción'}
-                  </div>
-                  {selected.contacto_telefono && (
-                    <div style={{ fontSize:11, color:'#334155', marginBottom:4 }}>📞 {selected.contacto_telefono}</div>
-                  )}
-                  {selected.horario_atencion && (
-                    <div style={{ fontSize:11, color:'#334155', marginBottom:4 }}>⏰ {selected.horario_atencion}</div>
-                  )}
-                  {editCoord ? (
-                    <div>
-                      <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#f59e0b', marginBottom:10, background:'#fff', borderRadius:8, padding:'8px 12px', border:'1px solid #fde68a' }}>
-                        Lat: {editCoord.lat.toFixed(6)}<br/>
-                        Lon: {editCoord.lng.toFixed(6)}
-                      </div>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <button className="btn btn-primary btn-sm" onClick={guardarUbicacion} disabled={saving} style={{ fontSize:11, flex:1 }}>
-                          {saving ? 'Guardando…' : '💾 Guardar'}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)} style={{ fontSize:11 }}>Cancelar</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display:'flex', gap:8, marginTop:8 }}>
-                      {canWrite && (
-                        <>
-                          <button className="btn btn-ghost btn-sm" style={{ flex:1, fontSize:11 }}
-                            onClick={() => setEditCoord({ lat: Number(selected.latitud), lng: Number(selected.longitud) })}>
-                            📍 Mover
-                          </button>
-                          <button className="btn btn-ghost btn-sm" onClick={eliminarUbicacion} style={{ fontSize:11, color:'#dc2626' }}>
-                            🗑️ Eliminar
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Lista sin ubicación (solo para clientes) */}
-          {showMode === 'clientes' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
-              <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Sin ubicar</div>
-                  <span style={{ fontSize:11, color:'#d97706', fontWeight:700, fontFamily:'JetBrains Mono,monospace' }}>{sinUbicacion.length}</span>
                 </div>
-                <div style={{ display:'flex', gap:6, flexDirection:'column' }}>
-                  <input className="input" style={{ fontSize:12, padding:'7px 10px' }} placeholder="Buscar…"
-                    value={busqueda} onChange={e => setBusqueda(e.target.value)} />
-                  <select className="select" style={{ fontSize:12, padding:'7px 10px' }}
-                    value={filtro} onChange={e => setFiltro(e.target.value)}>
-                    <option value="">Todos los estados</option>
-                    {Object.keys(ESTADO_COLOR).map(e => <option key={e}>{e}</option>)}
-                  </select>
+
+                <div className="form-row" style={{ marginBottom: '16px' }}>
+                  <div className="field-group">
+                    <label className="field-label">Descripción</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={nuevoPunto.ubicacion_descripcion}
+                      onChange={(e) => setNuevoPunto(prev => ({ ...prev, ubicacion_descripcion: e.target.value }))}
+                      placeholder="Descripción de la ubicación"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="field-group">
+                    <label className="field-label">Coordenadas</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`}
+                      disabled
+                      style={{ background: 'var(--surface-container)' }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div style={{ overflowY:'auto', flex:1 }}>
-                {loading ? (
-                  <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>Cargando…</div>
-                ) : filtradosSin.length === 0 ? (
-                  <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>
-                    {sinUbicacion.length === 0 ? '✓ Todos los clientes están en el mapa' : 'Sin resultados'}
-                  </div>
-                ) : filtradosSin.map(c => {
-                  const cfg = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
-                  return (
-                    <div key={c.id}
-                      style={{
-                        padding:'10px 14px', borderBottom:'1px solid #f8fafc',
-                        cursor: canWrite ? 'pointer' : 'default',
-                        background: selected?.id === c.id ? '#f0fdf4' : 'transparent',
-                        transition:'background .15s',
-                      }}
-                      onClick={() => { if (canWrite) { setSelected(c); setSelectedType('cliente'); setEditCoord(null) } }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
-                        <div style={{ fontSize:12, fontWeight:600, color:'#0f172a', lineHeight:1.3 }}>{c.nombre_razon_social}</div>
-                        <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:10, background:cfg.bg, color:cfg.txt, flexShrink:0 }}>
-                          {c.estado_servicio}
-                        </span>
-                      </div>
-                      <div style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>{c.zona_sector || 'Sin zona'}</div>
-                      {canWrite && selected?.id === c.id && !editCoord && (
-                        <div style={{ fontSize:11, color:'#16a34a', marginTop:4, fontWeight:600 }}>
-                          → Haz clic en el mapa para fijar ubicación
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+              
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setShowModalPunto(false)}>
+                  Cancelar
+                </button>
+                <button className="btn btn-primary" onClick={crearPuntoRef}>
+                  Crear Punto
+                </button>
               </div>
             </div>
-          )}
-
-          {/* Botón centrar en Barquisimeto */}
-          <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }}
-            onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
-            🏙️ Centrar en Barquisimeto
-          </button>
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* ── MODAL FORMULARIO NUEVA ANTENA ─────────────────────────── */}
-      {modalForm === 'nueva_antena' && (
-        <div style={{
-          position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000,
-          display:'flex', alignItems:'center', justifyContent:'center', padding:20
-        }}>
-          <div style={{ background:'#fff', borderRadius:16, padding:24, maxWidth:400, width:'100%' }}>
-            <div style={{ fontSize:18, fontWeight:700, color:'#0f172a', marginBottom:16 }}>📡 Nueva Antena</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Nombre *</label>
-                <input className="input" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} placeholder="Ej: Antena Principal" />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Descripción</label>
-                <input className="input" value={formData.ubicacion_descripcion || ''} onChange={e => setFormData({...formData, ubicacion_descripcion: e.target.value})} placeholder="Ubicación o referencia" />
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Latitud</label>
-                  <input className="input" type="number" step="0.000001" value={formData.latitud || ''} onChange={e => setFormData({...formData, latitud: parseFloat(e.target.value)})} placeholder="10.067" />
-                </div>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Longitud</label>
-                  <input className="input" type="number" step="0.000001" value={formData.longitud || ''} onChange={e => setFormData({...formData, longitud: parseFloat(e.target.value)})} placeholder="-69.347" />
-                </div>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Banda</label>
-                  <select className="select" value={formData.banda_frecuencia || ''} onChange={e => setFormData({...formData, banda_frecuencia: e.target.value})}>
-                    <option value="">Seleccionar</option>
-                    <option value="2.4GHz">2.4GHz</option>
-                    <option value="5GHz">5GHz</option>
-                    <option value="60GHz">60GHz</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Alcance (m)</label>
-                  <input className="input" type="number" value={formData.alcance_approx_metros || ''} onChange={e => setFormData({...formData, alcance_approx_metros: parseInt(e.target.value)})} placeholder="5000" />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Potencia (W)</label>
-                <input className="input" type="number" step="0.1" value={formData.potencia_watts || ''} onChange={e => setFormData({...formData, potencia_watts: parseFloat(e.target.value)})} placeholder="100" />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Notas técnicas</label>
-                <textarea className="input" rows={2} value={formData.nota_tecnica || ''} onChange={e => setFormData({...formData, nota_tecnica: e.target.value})} placeholder="Configuración especial, equipo, etc." />
-              </div>
-            </div>
-            <div style={{ display:'flex', gap:8, marginTop:16 }}>
-              <button className="btn btn-primary" onClick={crearAntena} disabled={formSaving} style={{ flex:1 }}>
-                {formSaving ? 'Guardando…' : 'Crear Antena'}
-              </button>
-              <button className="btn btn-ghost" onClick={() => { setModalForm(null); setFormData({}) }}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL FORMULARIO NUEVO PUNTO DE REFERENCIA ─────────────── */}
-      {modalForm === 'nuevo_punto_ref' && (
-        <div style={{
-          position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000,
-          display:'flex', alignItems:'center', justifyContent:'center', padding:20
-        }}>
-          <div style={{ background:'#fff', borderRadius:16, padding:24, maxWidth:400, width:'100%' }}>
-            <div style={{ fontSize:18, fontWeight:700, color:'#0f172a', marginBottom:16 }}>📍 Nuevo Punto de Referencia</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Nombre *</label>
-                <input className="input" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} placeholder="Ej: Snack Central" />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Descripción</label>
-                <input className="input" value={formData.ubicacion_descripcion || ''} onChange={e => setFormData({...formData, ubicacion_descripcion: e.target.value})} placeholder="Dirección o referencia" />
-              </div>
-              <div style={{ fontSize:11, color:'#64748b', padding:8, background:'#f8fafc', borderRadius:8 }}>
-                📍 Coordenadas: {formData.latitud?.toFixed(6) || '10.067'}, {formData.longitud?.toFixed(6) || '-69.347'}
-              </div>
-            </div>
-            <div style={{ display:'flex', gap:8, marginTop:16 }}>
-              <button className="btn btn-primary" onClick={crearPuntoRef} disabled={formSaving} style={{ flex:1 }}>
-                {formSaving ? 'Guardando…' : 'Crear Punto'}
-              </button>
-              <button className="btn btn-ghost" onClick={() => { setModalForm(null); setFormData({}) }}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
