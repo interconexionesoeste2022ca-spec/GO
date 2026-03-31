@@ -43,65 +43,50 @@ function calcularDistanciaRuta(puntos) {
   return total
 }
 
-function makeSvgPin(color) {
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
-      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
-      </filter>
-      <path d="M16 1C7.715 1 1 7.715 1 16c0 11.25 15 25 15 25S31 27.25 31 16C31 7.715 24.285 1 16 1z"
-        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
-      <circle cx="16" cy="16" r="5.5" fill="white" opacity="0.95"/>
-    </svg>
-  `)}`
-}
+// ─── Iconos SVG Personalizados por ISTICH ───
+function makeSvgPin(color, icon = 'default', size = { width: 32, height: 42 }) {
+  const icons = {
+    // Cliente Normal - Pin verde con círculo blanco
+    default: `<circle cx="16" cy="16" r="6" fill="white"/>`,
+    
+    // Cliente con Alerta - Pin rojo con exclamación
+    alert: `<circle cx="16" cy="16" r="7" fill="white"/><path d="M16 11V18M16 21H16.01" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>`,
+    
+    // Antena - Pin azul con diseño de torre
+    antena: `<path d="M16 8V22M12 12L16 8L20 12M10 16L16 8L22 16" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="8" r="1.5" fill="white"/>`,
+    
+    // Punto de Referencia - Pin ámbar con círculos concéntricos
+    punto: `<circle cx="16" cy="14" r="6" stroke="white" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="white"/>`,
+  }
 
-// Ícono de cliente CON ALERTA (tiene reportes abiertos)
-function makeSvgPinAlerta(color) {
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46">
-      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
-      </filter>
-      <path d="M18 1C8.715 1 2 7.715 2 16c0 11.25 16 25 16 25S34 27.25 34 16C34 7.715 27.285 1 18 1z"
-        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
-      <circle cx="18" cy="16" r="5.5" fill="white" opacity="0.95"/>
-      <!-- Alerta roja -->
-      <circle cx="28" cy="6" r="6.5" fill="#dc2626" stroke="white" stroke-width="2"/>
-      <text x="28" y="10" font-size="12" font-weight="bold" text-anchor="middle" fill="white" font-family="Arial">!</text>
-    </svg>
-  `)}`
-}
+  // Ajustar viewBox según el tipo de icono
+  const getViewBox = () => {
+    switch(icon) {
+      case 'antena': return '0 0 32 40'
+      case 'punto': return '0 0 32 36'
+      default: return '0 0 32 42'
+    }
+  }
 
-// Ícono de antena (torre)
-function makeSvgAntena(color) {
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
-      </filter>
-      <rect x="14" y="6" width="4" height="20" fill="${color}" filter="url(#sh)"/>
-      <circle cx="16" cy="4" r="3" fill="${color}"/>
-      <line x1="16" y1="8" x2="9" y2="12" stroke="${color}" stroke-width="1" opacity="0.7"/>
-      <line x1="16" y1="12" x2="9" y2="16" stroke="${color}" stroke-width="1" opacity="0.7"/>
-      <line x1="16" y1="8" x2="23" y2="12" stroke="${color}" stroke-width="1" opacity="0.7"/>
-      <line x1="16" y1="12" x2="23" y2="16" stroke="${color}" stroke-width="1" opacity="0.7"/>
-      <rect x="10" y="28" width="12" height="8" rx="1" fill="${color}" opacity="0.9"/>
-    </svg>
-  `)}`
-}
+  // Ajustar path del pin según el tamaño
+  const getPinPath = () => {
+    switch(icon) {
+      case 'antena': return 'M16 40C16 40 32 24.5 32 15C32 6.16344 24.8366 -1 16 -1C7.16344 -1 0 6.16344 0 15C0 24.5 16 40 16 40Z'
+      case 'punto': return 'M16 36C16 36 32 22 32 14C32 5.16344 24.8366 -2 16 -2C7.16344 -2 0 5.16344 0 14C0 22 16 36 16 36Z'
+      default: return 'M16 42C16 42 32 25.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 25.5 16 42 16 42Z'
+    }
+  }
 
-// Ícono de punto de referencia (marcador personalizado)
-function makeSvgPuntoReferencia(color) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
-      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
+    <svg width="${size.width}" height="${size.height}" viewBox="${getViewBox()}" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <filter id="shadow" x="-2" y="-2" width="36" height="46">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
+        <feOffset dx="0" dy="1" result="offsetblur"/>
+        <feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
-      <path d="M16 1C7.715 1 1 7.715 1 16c0 11.25 15 25 15 25S31 27.25 31 16C31 7.715 24.285 1 16 1z"
-        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
-      <circle cx="16" cy="16" r="6" fill="white" opacity="0.2"/>
-      <circle cx="16" cy="16" r="3" fill="white" opacity="0.9"/>
+      <path d="${getPinPath()}" fill="${color}" filter="url(#shadow)"/>
+      ${icons[icon] || icons.default}
     </svg>
   `)}`
 }
@@ -113,9 +98,7 @@ export default function MapaPage() {
   const mapObj   = useRef(null)
   const markersRef = useRef([])
   const leafletRef = useRef(null)
-  // ─── Ref para que el click del mapa siempre vea el estado real del medidor ───
   const medidorActivoRef = useRef(false)
-  // ─── Ref para la polilínea del medidor (evita re-renders infinitos) ───
   const polylineRef = useRef(null)
 
   const [clientes, setClientes] = useState([])
@@ -125,14 +108,21 @@ export default function MapaPage() {
   const [reportes, setReportes] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [leafletReady, setLeafletReady] = useState(false)
+  
+  // ─── Estados para el buscador avanzado ───────────────────────
+  const [busquedaGlobal, setBusquedaGlobal] = useState('')
+  const [resultadosBusqueda, setResultadosBusqueda] = useState([])
+  const [mostrarResultados, setMostrarResultados] = useState(false)
+  const [busquedaActiva, setBusquedaActiva] = useState(false)
+  
   const [busqueda, setBusqueda] = useState('')
   const [filtro,   setFiltro]   = useState('')
   const [selected, setSelected] = useState(null)
-  const [selectedType, setSelectedType] = useState('cliente') // 'cliente' | 'antena' | 'punto_ref'
+  const [selectedType, setSelectedType] = useState('cliente')
   const [editCoord, setEditCoord] = useState(null)
   const [saving,   setSaving]   = useState(false)
-  const [showMode, setShowMode] = useState('clientes') // 'clientes' | 'antenas' | 'puntos_ref'
-  const [modalForm, setModalForm] = useState(null) // null | 'nueva_antena' | 'nuevo_punto_ref'
+  const [showMode, setShowMode] = useState('clientes')
+  const [modalForm, setModalForm] = useState(null)
   const [formData, setFormData] = useState({})
   const [formSaving, setFormSaving] = useState(false)
   const [medidor, setMedidor] = useState({ activo: false, puntos: [], distanciaTotal: 0 })
@@ -159,10 +149,126 @@ export default function MapaPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  // ─── Sincronizar ref con state del medidor para uso en closures ───
+  // ─── Sincronizar ref con state del medidor ───
   useEffect(() => {
     medidorActivoRef.current = medidor.activo
   }, [medidor.activo])
+
+  // ─── Buscador avanzado ─────────────────────────────────────────
+  const buscarGlobal = useCallback((query) => {
+    if (!query || query.length < 2) {
+      setResultadosBusqueda([])
+      setMostrarResultados(false)
+      return
+    }
+
+    const q = query.toLowerCase()
+    const resultados = []
+
+    // Buscar en clientes
+    clientes.forEach(c => {
+      if (c.nombre_razon_social?.toLowerCase().includes(q) ||
+          c.documento_identidad?.toLowerCase().includes(q) ||
+          c.zona_sector?.toLowerCase().includes(q) ||
+          c.direccion_ubicacion?.toLowerCase().includes(q)) {
+        resultados.push({
+          tipo: 'cliente',
+          id: c.id,
+          nombre: c.nombre_razon_social,
+          subtitulo: c.zona_sector || c.documento_identidad || '',
+          estado: c.estado_servicio,
+          lat: c.latitud,
+          lng: c.longitud,
+          color: ESTADO_COLOR[c.estado_servicio]?.pin || '#16a34a'
+        })
+      }
+    })
+
+    // Buscar en antenas
+    antenas.forEach(a => {
+      if (a.nombre?.toLowerCase().includes(q) ||
+          a.ubicacion_descripcion?.toLowerCase().includes(q) ||
+          a.banda_frecuencia?.toLowerCase().includes(q)) {
+        resultados.push({
+          tipo: 'antena',
+          id: a.id,
+          nombre: a.nombre,
+          subtitulo: a.ubicacion_descripcion || a.banda_frecuencia || '',
+          estado: 'Activa',
+          lat: a.latitud,
+          lng: a.longitud,
+          color: '#2563eb'
+        })
+      }
+    })
+
+    // Buscar en puntos de referencia
+    puntosRef.forEach(p => {
+      if (p.nombre?.toLowerCase().includes(q) ||
+          p.ubicacion_descripcion?.toLowerCase().includes(q) ||
+          p.contacto_telefono?.toLowerCase().includes(q)) {
+        resultados.push({
+          tipo: 'punto_ref',
+          id: p.id,
+          nombre: p.nombre,
+          subtitulo: p.ubicacion_descripcion || p.contacto_telefono || '',
+          estado: 'Activo',
+          lat: p.latitud,
+          lng: p.longitud,
+          color: '#f59e0b'
+        })
+      }
+    })
+
+    setResultadosBusqueda(resultados.slice(0, 8)) // Limitar a 8 resultados
+    setMostrarResultados(true)
+  }, [clientes, antenas, puntosRef])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      buscarGlobal(busquedaGlobal)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [busquedaGlobal, buscarGlobal])
+
+  // ─── Función para ir a un resultado de búsqueda ─────────────────
+  const irAResultado = (resultado) => {
+    if (!mapObj.current) return
+    
+    // Cambiar al modo correspondiente
+    setShowMode(resultado.tipo === 'cliente' ? 'clientes' : resultado.tipo === 'antena' ? 'antenas' : 'puntos_ref')
+    
+    // Mover el mapa
+    if (resultado.lat && resultado.lng) {
+      mapObj.current.flyTo([Number(resultado.lat), Number(resultado.lng)], 17, { duration: 1.5 })
+    }
+    
+    // Seleccionar el elemento
+    if (resultado.tipo === 'cliente') {
+      const cliente = clientes.find(c => c.id === resultado.id)
+      if (cliente) {
+        setSelected(cliente)
+        setSelectedType('cliente')
+      }
+    } else if (resultado.tipo === 'antena') {
+      const antena = antenas.find(a => a.id === resultado.id)
+      if (antena) {
+        setSelected(antena)
+        setSelectedType('antena')
+      }
+    } else if (resultado.tipo === 'punto_ref') {
+      const punto = puntosRef.find(p => p.id === resultado.id)
+      if (punto) {
+        setSelected(punto)
+        setSelectedType('punto_ref')
+      }
+    }
+    
+    // Cerrar resultados de búsqueda
+    setMostrarResultados(false)
+    setBusquedaGlobal('')
+  }
 
   // ─── Cargar Leaflet CSS+JS dinámicamente ───────────────────────
   useEffect(() => {
@@ -200,10 +306,8 @@ export default function MapaPage() {
       maxZoom: 19,
     }).addTo(map)
 
-    // Click en mapa: leer ref en vez de closure para ver estado live
     map.on('click', (e) => {
       if (medidorActivoRef.current) {
-        // Medidor activo → agregar punto usando función de actualización
         setMedidor(prev => {
           const nuevosPuntos = [...prev.puntos, [e.latlng.lat, e.latlng.lng]]
           const distanciaTotal = calcularDistanciaRuta(nuevosPuntos)
@@ -211,7 +315,6 @@ export default function MapaPage() {
         })
         return
       }
-      // Comportamiento normal: reubicar
       if (canWrite) {
         setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
       }
@@ -234,15 +337,13 @@ export default function MapaPage() {
     conCoords.forEach(c => {
       const cfg  = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
       const plan = planes.find(p => p.id === c.plan_id)
-      
-      // Verificar si el cliente tiene reportes abiertos
       const tieneAlerta = reportes.some(r => r.cliente_id === c.id && r.estado === 'abierto')
       
       const icon = L.icon({
-        iconUrl:    tieneAlerta ? makeSvgPinAlerta(cfg.pin) : makeSvgPin(cfg.pin),
-        iconSize:   tieneAlerta ? [36, 46] : [32, 42],
-        iconAnchor: tieneAlerta ? [18, 46] : [16, 42],
-        popupAnchor:tieneAlerta ? [0, -48] : [0, -44],
+        iconUrl:    tieneAlerta ? makeSvgPin('#dc2626', 'alert', { width: 32, height: 42 }) : makeSvgPin(cfg.pin, 'default'),
+        iconSize:   tieneAlerta ? [32, 42] : [32, 42],
+        iconAnchor: tieneAlerta ? [16, 42] : [16, 42],
+        popupAnchor:tieneAlerta ? [0, -44] : [0, -44],
       })
 
       const marker = L.marker([Number(c.latitud), Number(c.longitud)], { icon, title: c.nombre_razon_social })
@@ -270,7 +371,7 @@ export default function MapaPage() {
     // ─── ANTENAS ────────────────
     antenas.forEach(a => {
       const iconAddr = L.icon({
-        iconUrl:    makeSvgAntena(ICON_TYPES.antena.color),
+        iconUrl:    makeSvgPin(ICON_TYPES.antena.color, 'antena', { width: 32, height: 40 }),
         iconSize:   [32, 40],
         iconAnchor: [16, 40],
         popupAnchor:[0, -42],
@@ -300,7 +401,7 @@ export default function MapaPage() {
     // ─── PUNTOS DE REFERENCIA ────────────────
     puntosRef.forEach(s => {
       const iconAddr = L.icon({
-        iconUrl:    makeSvgPuntoReferencia(ICON_TYPES.punto_ref.color),
+        iconUrl:    makeSvgPin(ICON_TYPES.punto_ref.color, 'punto', { width: 32, height: 36 }),
         iconSize:   [32, 36],
         iconAnchor: [16, 36],
         popupAnchor:[0, -38],
@@ -335,12 +436,11 @@ export default function MapaPage() {
     }
   }, [clientes, antenas, puntosRef, planes, reportes, leafletReady, loading, showMode])
 
-  // ─── Renderizar polilínea del medidor (usa ref para no generar loop) ────
+  // ─── Renderizar polilínea del medidor ────
   useEffect(() => {
     if (!mapObj.current || !leafletReady) return
     const L = window.L
 
-    // Limpiar polilínea y círculos anteriores
     if (polylineRef.current) {
       polylineRef.current.forEach(layer => layer.remove())
       polylineRef.current = null
@@ -350,7 +450,6 @@ export default function MapaPage() {
 
     const layers = []
 
-    // Polilínea entre todos los puntos
     if (medidor.puntos.length > 1) {
       const poly = L.polyline(medidor.puntos, {
         color: '#16a34a',
@@ -361,7 +460,6 @@ export default function MapaPage() {
       layers.push(poly)
     }
 
-    // Círculo en cada punto
     medidor.puntos.forEach((punto, idx) => {
       const circle = L.circleMarker(punto, {
         radius: 6,
@@ -413,7 +511,6 @@ export default function MapaPage() {
     finally { setSaving(false) }
   }
 
-  // Eliminar ubicación
   async function eliminarUbicacion() {
     if (!selected || !confirm('¿Estás seguro de que deseas eliminar esta ubicación?')) return
     setSaving(true)
@@ -431,14 +528,12 @@ export default function MapaPage() {
     finally { setSaving(false) }
   }
 
-  // Mover mapa a un cliente de la lista
   function volarA(c) {
     if (!mapObj.current || !c.latitud) return
     mapObj.current.flyTo([Number(c.latitud), Number(c.longitud)], 16, { duration: 1 })
     setSelected(c)
   }
 
-  // ─── Crear nueva ANTENA ───────────────────────
   async function crearAntena() {
     if (!formData.nombre || formData.nombre.trim() === '') {
       await alertaError('Error', 'El nombre es requerido')
@@ -464,7 +559,6 @@ export default function MapaPage() {
     finally { setFormSaving(false) }
   }
 
-  // ─── Crear nuevo PUNTO DE REFERENCIA ───────────────────────
   async function crearPuntoRef() {
     if (!formData.nombre || formData.nombre.trim() === '') {
       await alertaError('Error', 'El nombre es requerido')
@@ -497,7 +591,6 @@ export default function MapaPage() {
            (!filtro || c.estado_servicio === filtro)
   })
 
-  // Estadísticas por estado (solo clientes)
   const statsPorEstado = Object.entries(ESTADO_COLOR).map(([estado, cfg]) => ({
     estado, cfg,
     total: clientes.filter(c => c.estado_servicio === estado).length
@@ -519,6 +612,58 @@ export default function MapaPage() {
           box-shadow: 0 4px 16px rgba(0,0,0,0.3); white-space: nowrap;
           z-index: 800; pointer-events: none;
         }
+        .gn-search-container {
+          position: absolute; top: 14px; right: 14px; z-index: 500;
+          width: 320px;
+        }
+        .gn-search-input {
+          width: 100%; padding: 10px 14px; font-size: 13px;
+          border: 2px solid #e2e8f0; border-radius: 12px;
+          background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+          box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+          transition: all 0.2s;
+        }
+        .gn-search-input:focus {
+          outline: none; border-color: #16a34a;
+          box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
+        }
+        .gn-search-results {
+          position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+          background: #fff; border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          border: 1px solid #e2e8f0; max-height: 320px; overflow-y: auto;
+          z-index: 600;
+        }
+        .gn-search-result-item {
+          padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
+          cursor: pointer; transition: background 0.15s;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .gn-search-result-item:hover {
+          background: #f8fafc;
+        }
+        .gn-search-result-item:last-child {
+          border-bottom: none;
+        }
+        .gn-search-result-icon {
+          width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .gn-search-result-content {
+          flex: 1; min-width: 0;
+        }
+        .gn-search-result-title {
+          font-size: 13px; font-weight: 600; color: #0f172a;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .gn-search-result-subtitle {
+          font-size: 11px; color: #64748b;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .gn-search-result-badge {
+          font-size: 10px; padding: 2px 8px; border-radius: 10px;
+          font-weight: 600; text-transform: uppercase;
+          flex-shrink: 0;
+        }
       `}</style>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16, height:'calc(100vh - 130px)', minHeight:500 }}>
@@ -526,6 +671,60 @@ export default function MapaPage() {
         {/* ── Mapa ──────────────────────────────────────────────── */}
         <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid #e2e8f0', boxShadow:'0 1px 8px rgba(0,0,0,0.07)' }}>
           <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
+
+          {/* ─── BUSCADOR AVANZADO ───────────────────────────────── */}
+          <div className="gn-search-container">
+            <input
+              type="text"
+              className="gn-search-input"
+              placeholder="🔍 Buscar clientes, antenas o puntos..."
+              value={busquedaGlobal}
+              onChange={(e) => setBusquedaGlobal(e.target.value)}
+              onFocus={() => setBusquedaActiva(true)}
+              onBlur={() => setTimeout(() => setBusquedaActiva(false), 200)}
+            />
+            
+            {mostrarResultados && resultadosBusqueda.length > 0 && (
+              <div className="gn-search-results">
+                {resultadosBusqueda.map((resultado, idx) => (
+                  <div
+                    key={`${resultado.tipo}-${resultado.id}-${idx}`}
+                    className="gn-search-result-item"
+                    onClick={() => irAResultado(resultado)}
+                  >
+                    <div 
+                      className="gn-search-result-icon"
+                      style={{ background: resultado.color }}
+                    />
+                    <div className="gn-search-result-content">
+                      <div className="gn-search-result-title">{resultado.nombre}</div>
+                      <div className="gn-search-result-subtitle">{resultado.subtitulo}</div>
+                    </div>
+                    <span 
+                      className="gn-search-result-badge"
+                      style={{
+                        background: resultado.tipo === 'cliente' ? '#dcfce7' : 
+                                   resultado.tipo === 'antena' ? '#dbeafe' : '#fef3c7',
+                        color: resultado.tipo === 'cliente' ? '#166534' : 
+                               resultado.tipo === 'antena' ? '#1e40af' : '#92400e'
+                      }}
+                    >
+                      {resultado.tipo === 'cliente' ? 'Cliente' : 
+                       resultado.tipo === 'antena' ? 'Antena' : 'Punto'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {mostrarResultados && resultadosBusqueda.length === 0 && busquedaGlobal.length >= 2 && (
+              <div className="gn-search-results">
+                <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                  No se encontraron resultados
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Banner de edición/modo */}
           {selected && canWrite && editCoord ? (
@@ -593,7 +792,7 @@ export default function MapaPage() {
             </button>
           </div>
 
-          {/* Leyenda — oculta cuando el medidor está activo para no solaparse */}
+          {/* Leyenda — oculta cuando el medidor está activo */}
           {!medidor.activo && (
             <div style={{
               position:'absolute', bottom:24, left:12, zIndex:500,
@@ -625,7 +824,7 @@ export default function MapaPage() {
             </div>
           )}
 
-          {/* Panel MEDIDOR activo — reemplaza a la leyenda cuando está visible */}
+          {/* Panel MEDIDOR activo */}
           {medidor.activo && (
             <div style={{
               position:'absolute', bottom:24, left:12, zIndex:500,
