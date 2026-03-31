@@ -1,124 +1,32 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { api, getSesion, tienePermiso, alertaExito, alertaError } from '@/lib/api'
 
 const ESTADO_COLOR = {
-  Activo:     { pin: '#00ff88', bg: 'rgba(0, 255, 136, 0.15)', txt: '#00ff88', ring: 'rgba(0, 255, 136, 0.3)', glow: 'rgba(0, 255, 136, 0.5)' },
-  Cortado:    { pin: '#ff4757', bg: 'rgba(255, 71, 87, 0.15)', txt: '#ff4757', ring: 'rgba(255, 71, 87, 0.3)', glow: 'rgba(255, 71, 87, 0.5)' },
-  Deudor:     { pin: '#ffa502', bg: 'rgba(255, 165, 2, 0.15)', txt: '#ffa502', ring: 'rgba(255, 165, 2, 0.3)', glow: 'rgba(255, 165, 2, 0.5)' },
-  Suspendido: { pin: '#747d8c', bg: 'rgba(116, 125, 140, 0.15)', txt: '#747d8c', ring: 'rgba(116, 125, 140, 0.3)', glow: 'rgba(116, 125, 140, 0.5)' },
+  Activo: '#16a34a',
+  Cortado: '#dc2626',
+  Deudor: '#d97706',
+  Suspendido: '#6b7280',
 }
 
-// Iconos para diferentes tipos de ubicación con diseño futurista
-const ICON_TYPES = {
-  cliente:   { color: '#00ff88', label: 'Clientes', gradient: 'linear-gradient(135deg, #00ff88, #00d4ff)' },
-  antena:    { color: '#00d4ff', label: 'Antenas', gradient: 'linear-gradient(135deg, #00d4ff, #0099ff)' },
-  punto_ref: { color: '#ffa502', label: 'Puntos de Referencia', gradient: 'linear-gradient(135deg, #ffa502, #ff6348)' },
-}
-
-// Barquisimeto, Venezuela
-const BAR_LAT = 10.067
-const BAR_LNG = -69.347
-
-// ─── Función para calcular distancia entre 2 puntos (Haversine) ───
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-  const R = 6371000 // Radio de la Tierra en metros
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  return R * c // Distancia en metros
-}
-
-// ─── Función para calcular distancia total de una ruta ───
-function calcularDistanciaRuta(puntos) {
-  let total = 0
-  for (let i = 0; i < puntos.length - 1; i++) {
-    const [lat1, lon1] = puntos[i]
-    const [lat2, lon2] = puntos[i + 1]
-    total += calcularDistancia(lat1, lon1, lat2, lon2)
-  }
-  return total
-}
-
-// ─── Iconos SVG Personalizados con Diseño Futurista ───
-function makeSvgPin(color, icon = 'default', size = { width: 40, height: 50 }) {
-  const icons = {
-    // Cliente Normal - Diseño futurista con círculo brillante
-    default: `
-      <circle cx="20" cy="20" r="8" fill="white" opacity="0.9"/>
-      <circle cx="20" cy="20" r="4" fill="${color}"/>
-      <circle cx="20" cy="20" r="2" fill="white" opacity="0.8"/>
-    `,
-    
-    // Cliente con Alerta - Diseño con pulso y warning
-    alert: `
-      <circle cx="20" cy="20" r="10" fill="white" opacity="0.8"/>
-      <path d="M20 15V22M20 25H20.01" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    `,
-    
-    // Antena - Diseño de torre con ondas de señal
-    antena: `
-      <path d="M20 10V26M16 14L20 10L24 14M14 18L20 10L26 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="20" cy="10" r="2" fill="white"/>
-    `,
-    
-    // Punto de Referencia - Diseño con anillos concéntricos
-    punto: `
-      <circle cx="20" cy="18" r="8" stroke="white" stroke-width="2" fill="none" opacity="0.8"/>
-      <circle cx="20" cy="18" r="12" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
-      <circle cx="20" cy="18" r="4" fill="white" opacity="0.9"/>
-      <circle cx="20" cy="18" r="2" fill="${color}"/>
-    `,
-  }
-
-  // Ajustar viewBox según el tipo de icono
-  const getViewBox = () => {
-    switch(icon) {
-      case 'antena': return '0 0 40 50'
-      case 'punto': return '0 0 40 45'
-      default: return '0 0 40 50'
-    }
-  }
-
-  // Path del pin con diseño futurista
-  const getPinPath = () => {
-    switch(icon) {
-      case 'antena': return 'M20 50C20 50 40 30 40 18C40 8.05887 31.0459 0 20 0C8.9541 0 0 8.05887 0 18C0 30 20 50 20 50Z'
-      case 'punto': return 'M20 45C20 45 40 26 40 16C40 6.05887 31.0459 -2 20 -2C8.9541 -2 0 6.05887 0 16C0 26 20 45 20 45Z'
-      default: return 'M20 50C20 50 40 31 40 20C40 8.9543 31.0459 0 20 0C8.9541 0 0 8.9543 0 20C0 31 20 50 20 50Z'
-    }
-  }
-
+function makeIcon(estado) {
+  const color = ESTADO_COLOR[estado] || ESTADO_COLOR.Activo
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg width="${size.width}" height="${size.height}" viewBox="${getViewBox()}" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="shadow" x="-4" y="-4" width="48" height="58">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-          <feOffset dx="0" dy="2" result="offsetblur"/>
-          <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
-          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
-          <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
-        </linearGradient>
-      </defs>
-      <path d="${getPinPath()}" fill="url(#pinGrad)" filter="url(#shadow)" opacity="0.95"/>
-      ${icons[icon] || icons.default}
+    <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 40C16 40 32 25.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 25.5 16 40 16 40Z" fill="${color}" stroke="white" stroke-width="2"/>
+      <circle cx="16" cy="16" r="8" fill="white" opacity="0.9"/>
+      <circle cx="16" cy="16" r="4" fill="${color}"/>
     </svg>
   `)}`
 }
 
 export default function MapaPage() {
-  const sesion   = getSesion()
+  const sesion = getSesion()
   const canWrite = tienePermiso(sesion?.rol, 'write')
-  const mapRef   = useRef(null)
-  const mapObj   = useRef(null)
+  const mapRef = useRef(null)
+  const mapObj = useRef(null)
   const markersRef = useRef([])
-  const leafletRef = useRef(null)
+  const [leafletLoaded, setLeafletLoaded] = useState(false)
   const [clientes, setClientes] = useState([])
   const [antenas, setAntenas] = useState([])
   const [puntosRef, setPuntosRef] = useState([])
@@ -136,49 +44,29 @@ export default function MapaPage() {
   const [medirDistancia, setMedirDistancia] = useState(false)
   const [rutaPuntos, setRutaPuntos] = useState([])
   const [distanciaTotal, setDistanciaTotal] = useState(0)
-  const [editCoord, setEditCoord] = useState(null)
-  const [showModalAntena, setShowModalAntena] = useState(false)
-  const [showModalPunto, setShowModalPunto] = useState(false)
-  const [nuevaAntena, setNuevaAntena] = useState({
-    nombre: '',
-    latitud: 0,
-    longitud: 0,
-    banda_frecuencia: '',
-    potencia_watts: '',
-    alcance_approx_metros: '',
-    ubicacion_descripcion: '',
-    nota_tecnica: ''
-  })
-  const [nuevoPunto, setNuevoPunto] = useState({
-    nombre: '',
-    latitud: 0,
-    longitud: 0,
-    ubicacion_descripcion: ''
-  })
   const [contextMenu, setContextMenu] = useState(null)
-  const [highlightedClient, setHighlightedClient] = useState(null)
 
-  // Cargar Leaflet dinámicamente
+  // Cargar Leaflet
   useEffect(() => {
-    const loadLeaflet = async () => {
-      if (!window.L) {
-        // Cargar CSS
-        const leafletCss = document.createElement('link')
-        leafletCss.rel = 'stylesheet'
-        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        document.head.appendChild(leafletCss)
-
-        // Cargar JS
-        const leafletJs = document.createElement('script')
-        leafletJs.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-        leafletJs.onload = () => {
-          leafletRef.current = true
-        }
-        document.head.appendChild(leafletJs)
-      } else {
-        leafletRef.current = true
+    const loadLeaflet = () => {
+      if (window.L) {
+        setLeafletLoaded(true)
+        return
       }
+
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      script.onload = () => {
+        setLeafletLoaded(true)
+      }
+      document.head.appendChild(script)
     }
+
     loadLeaflet()
   }, [])
 
@@ -198,39 +86,36 @@ export default function MapaPage() {
         setReportes(reportesRes || [])
       } catch (error) {
         console.error('Error cargando datos:', error)
-        alertaError('Error al cargar los datos')
       } finally {
         setLoading(false)
       }
     }
-    if (sesion) loadData()
-  }, [sesion])
+
+    loadData()
+  }, [])
 
   // Inicializar mapa
   useEffect(() => {
-    if (!leafletRef.current || !mapRef.current || mapObj.current) return
-    
+    if (!leafletLoaded || !mapRef.current || mapObj.current) return
+
     const L = window.L
-    const map = L.map(mapRef.current, { 
-      center: [BAR_LAT, BAR_LNG], 
-      zoom: 13, 
-      zoomControl: true,
-      attributionControl: false
+    const map = L.map(mapRef.current, {
+      center: [10.067, -69.347], // Barquisimeto
+      zoom: 13,
+      zoomControl: true
     })
-    
-    // Tile layer con estilo oscuro/moderno
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap contributors © CARTO',
-      subdomains: 'abcd',
-      maxZoom: 19
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
     }).addTo(map)
 
-    // Evento click para editar coordenadas
+    // Eventos del mapa
     map.on('click', (e) => {
-      if (canWrite) setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
+      if (medirDistancia) {
+        handleMapClickMeasure(e)
+      }
     })
 
-    // Evento contextmenu para menú contextual
     map.on('contextmenu', (e) => {
       e.originalEvent.preventDefault()
       setContextMenu({
@@ -242,52 +127,46 @@ export default function MapaPage() {
     })
 
     mapObj.current = map
-  }, [leafletRef.current, canWrite])
+  }, [leafletLoaded])
 
   // Renderizar marcadores
   useEffect(() => {
-    if (!mapObj.current || !leafletRef.current) return
+    if (!mapObj.current || !leafletLoaded) return
     const L = window.L
 
     // Limpiar marcadores existentes
-    markersRef.current.forEach(marker => mapObj.current.removeLayer(marker))
+    markersRef.current.forEach(marker => {
+      mapObj.current.removeLayer(marker)
+    })
     markersRef.current = []
 
-    // Renderizar clientes
+    // Clientes
     if (filters.clientes) {
       clientes.forEach(cliente => {
         if (!cliente.latitud || !cliente.longitud) return
         if (!filters.estados[cliente.estado_servicio]) return
 
         const tieneAlerta = reportes.some(r => r.cliente_id === cliente.id && r.estado === 'abierto')
-        const isHighlighted = highlightedClient === cliente.id
-        const colorConfig = ESTADO_COLOR[cliente.estado_servicio] || ESTADO_COLOR.Activo
-
         const icon = L.divIcon({
           html: `<div style="position:relative;">
-            ${makeSvgPin(colorConfig.pin, tieneAlerta ? 'alert' : 'default', { width: 40, height: 50 })}
-            ${isHighlighted ? `<div style="position:absolute;top:-5px;left:-5px;right:-5px;bottom:-5px;border:2px solid ${colorConfig.glow};border-radius:50%;animation:pulse 2s infinite;pointer-events:none;"></div>` : ''}
+            <img src="${makeIcon(cliente.estado_servicio)}" style="width:32px;height:40px;"/>
+            ${tieneAlerta ? '<div style="position:absolute;top:0;right:0;background:red;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;">!</div>' : ''}
           </div>`,
           className: 'custom-marker',
-          iconSize: [40, 50],
-          iconAnchor: [20, 50],
-          popupAnchor: [0, -50],
-          zIndexOffset: isHighlighted ? 1000 : 0
+          iconSize: [32, 40],
+          iconAnchor: [16, 40]
         })
 
-        const popup = L.popup()
-          .setContent(`
-            <div style="font-family:'Inter',sans-serif;min-width:200px;">
-              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">${cliente.nombre_razon_social}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📍 ${cliente.direccion_ubicacion || 'Sin dirección'}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📞 ${cliente.telefono || 'Sin teléfono'}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:8px;">📦 ${cliente.planes?.nombre_plan || 'Sin plan'}</div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                <span style="background:${colorConfig.bg};color:${colorConfig.txt};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${cliente.estado_servicio}</span>
-                ${tieneAlerta ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">⚠️ Reporte activo</span>' : ''}
-              </div>
-            </div>
-          `)
+        const popup = L.popup().setContent(`
+          <div style="min-width:200px;font-family:sans-serif;">
+            <strong>${cliente.nombre_razon_social}</strong><br>
+            📍 ${cliente.direccion_ubicacion || 'Sin dirección'}<br>
+            📞 ${cliente.telefono || 'Sin teléfono'}<br>
+            📦 ${cliente.planes?.nombre_plan || 'Sin plan'}<br>
+            <span style="background:${ESTADO_COLOR[cliente.estado_servicio]};color:white;padding:2px 8px;border-radius:12px;font-size:11px;">${cliente.estado_servicio}</span>
+            ${tieneAlerta ? '<span style="background:red;color:white;padding:2px 8px;border-radius:12px;font-size:11px;margin-left:4px;">⚠️ Reporte activo</span>' : ''}
+          </div>
+        `)
 
         const marker = L.marker([cliente.latitud, cliente.longitud], { icon })
           .addTo(mapObj.current)
@@ -297,30 +176,33 @@ export default function MapaPage() {
       })
     }
 
-    // Renderizar antenas
+    // Antenas
     if (filters.antenas) {
       antenas.forEach(antena => {
         const icon = L.divIcon({
-          html: makeSvgPin(ICON_TYPES.antena.color, 'antena', { width: 40, height: 50 }),
+          html: `<img src="data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+            <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 40C16 40 32 25.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 25.5 16 40 16 40Z" fill="#2563eb" stroke="white" stroke-width="2"/>
+              <text x="16" y="20" text-anchor="middle" fill="white" font-size="12" font-weight="bold">🗼</text>
+            </svg>
+          `)}" style="width:32px;height:40px;"/>`,
           className: 'custom-marker',
-          iconSize: [40, 50],
-          iconAnchor: [20, 50],
-          popupAnchor: [0, -50]
+          iconSize: [32, 40],
+          iconAnchor: [16, 40]
         })
 
-        const popup = L.popup()
-          .setContent(`
-            <div style="font-family:'Inter',sans-serif;min-width:200px;">
-              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">🗼 ${antena.nombre}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📍 ${antena.ubicacion_descripcion || 'Sin descripción'}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">📡 ${antena.banda_frecuencia || 'N/A'}</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:4px;">⚡ ${antena.potencia_watts || 'N/A'}W</div>
-              <div style="font-size:12px;color:#cccccc;margin-bottom:8px;">📏 ${antena.alcance_approx_metros || 'N/A'}m</div>
-              <div style="background:${antena.activa ? '#dcfce7' : '#fee2e2'};color:${antena.activa ? '#166534' : '#991b1b'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;display:inline-block;">
-                ${antena.activa ? '✅ Activa' : '❌ Inactiva'}
-              </div>
-            </div>
-          `)
+        const popup = L.popup().setContent(`
+          <div style="min-width:200px;font-family:sans-serif;">
+            <strong>🗼 ${antena.nombre}</strong><br>
+            📍 ${antena.ubicacion_descripcion || 'Sin descripción'}<br>
+            📡 ${antena.banda_frecuencia || 'N/A'}<br>
+            ⚡ ${antena.potencia_watts || 'N/A'}W<br>
+            📏 ${antena.alcance_approx_metros || 'N/A'}m<br>
+            <span style="background:${antena.activa ? '#dcfce7' : '#fee2e2'};color:${antena.activa ? '#166534' : '#991b1b'};padding:2px 8px;border-radius:12px;font-size:11px;">
+              ${antena.activa ? '✅ Activa' : '❌ Inactiva'}
+            </span>
+          </div>
+        `)
 
         const marker = L.marker([antena.latitud, antena.longitud], { icon })
           .addTo(mapObj.current)
@@ -330,24 +212,27 @@ export default function MapaPage() {
       })
     }
 
-    // Renderizar puntos de referencia
+    // Puntos de referencia
     if (filters.puntosRef) {
       puntosRef.forEach(punto => {
         const icon = L.divIcon({
-          html: makeSvgPin(ICON_TYPES.punto_ref.color, 'punto', { width: 40, height: 45 }),
+          html: `<img src="data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+            <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 40C16 40 32 25.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 25.5 16 40 16 40Z" fill="#f59e0b" stroke="white" stroke-width="2"/>
+              <text x="16" y="20" text-anchor="middle" fill="white" font-size="12" font-weight="bold">📍</text>
+            </svg>
+          `)}" style="width:32px;height:40px;"/>`,
           className: 'custom-marker',
-          iconSize: [40, 45],
-          iconAnchor: [20, 45],
-          popupAnchor: [0, -45]
+          iconSize: [32, 40],
+          iconAnchor: [16, 40]
         })
 
-        const popup = L.popup()
-          .setContent(`
-            <div style="font-family:'Inter',sans-serif;min-width:200px;">
-              <div style="font-weight:600;color:#ffffff;margin-bottom:8px;">📍 ${punto.nombre}</div>
-              <div style="font-size:12px;color:#cccccc;">${punto.ubicacion_descripcion || 'Sin descripción'}</div>
-            </div>
-          `)
+        const popup = L.popup().setContent(`
+          <div style="min-width:200px;font-family:sans-serif;">
+            <strong>📍 ${punto.nombre}</strong><br>
+            ${punto.ubicacion_descripcion || 'Sin descripción'}
+          </div>
+        `)
 
         const marker = L.marker([punto.latitud, punto.longitud], { icon })
           .addTo(mapObj.current)
@@ -357,9 +242,9 @@ export default function MapaPage() {
       })
     }
 
-  }, [clientes, antenas, puntosRef, filters, reportes, highlightedClient])
+  }, [clientes, antenas, puntosRef, filters, reportes, leafletLoaded])
 
-  // Buscar clientes con debounce
+  // Búsqueda
   useEffect(() => {
     if (!searchTerm) {
       setSearchResults([])
@@ -369,39 +254,34 @@ export default function MapaPage() {
 
     const timeoutId = setTimeout(() => {
       const results = []
-      
-      // Buscar clientes
+
       clientes.forEach(cliente => {
         if (cliente.nombre_razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             cliente.documento_identidad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cliente.zona_sector?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cliente.direccion_ubicacion?.toLowerCase().includes(searchTerm.toLowerCase())) {
+            cliente.zona_sector?.toLowerCase().includes(searchTerm.toLowerCase())) {
           results.push({
             type: 'cliente',
             data: cliente,
             label: cliente.nombre_razon_social,
             subtitle: cliente.zona_sector || cliente.direccion_ubicacion,
-            color: ICON_TYPES.cliente.color
+            color: ESTADO_COLOR[cliente.estado_servicio] || ESTADO_COLOR.Activo
           })
         }
       })
 
-      // Buscar antenas
       antenas.forEach(antena => {
         if (antena.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            antena.ubicacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            antena.banda_frecuencia?.toLowerCase().includes(searchTerm.toLowerCase())) {
+            antena.ubicacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase())) {
           results.push({
             type: 'antena',
             data: antena,
             label: antena.nombre,
             subtitle: antena.ubicacion_descripcion,
-            color: ICON_TYPES.antena.color
+            color: '#2563eb'
           })
         }
       })
 
-      // Buscar puntos de referencia
       puntosRef.forEach(punto => {
         if (punto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             punto.ubicacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -410,7 +290,7 @@ export default function MapaPage() {
             data: punto,
             label: punto.nombre,
             subtitle: punto.ubicacion_descripcion,
-            color: ICON_TYPES.punto_ref.color
+            color: '#f59e0b'
           })
         }
       })
@@ -422,31 +302,7 @@ export default function MapaPage() {
     return () => clearTimeout(timeoutId)
   }, [searchTerm, clientes, antenas, puntosRef])
 
-  // Verificar si hay cliente resaltado en la URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const clienteId = urlParams.get('highlight')
-    if (clienteId && !highlightedClient) {
-      setHighlightedClient(parseInt(clienteId))
-      
-      // Enfocar mapa en el cliente
-      const cliente = clientes.find(c => c.id === parseInt(clienteId))
-      if (cliente && cliente.latitud && cliente.longitud && mapObj.current) {
-        mapObj.current.setView([cliente.latitud, cliente.longitud], 16)
-        
-        // Abrir popup del cliente
-        setTimeout(() => {
-          const marker = markersRef.current.find(m => {
-            const pos = m.getLatLng()
-            return Math.abs(pos.lat - cliente.latitud) < 0.0001 && Math.abs(pos.lng - cliente.longitud) < 0.0001
-          })
-          if (marker) marker.openPopup()
-        }, 500)
-      }
-    }
-  }, [clientes, highlightedClient])
-
-  // Función para manejar clic en resultado de búsqueda
+  // Click en resultado de búsqueda
   const handleSearchResultClick = (result) => {
     if (!result.data.latitud || !result.data.longitud) return
     
@@ -454,7 +310,6 @@ export default function MapaPage() {
     setSearchTerm('')
     setShowSearch(false)
     
-    // Abrir popup del marcador
     setTimeout(() => {
       const marker = markersRef.current.find(m => {
         const pos = m.getLatLng()
@@ -464,43 +319,51 @@ export default function MapaPage() {
     }, 300)
   }
 
-  // Función para manejar medición de distancias
-  const handleMapClickMeasure = useCallback((e) => {
+  // Medición de distancias
+  const handleMapClickMeasure = (e) => {
     if (!medirDistancia) return
     
     const newPoint = [e.latlng.lat, e.latlng.lng]
     const newRuta = [...rutaPuntos, newPoint]
     setRutaPuntos(newRuta)
     
-    // Calcular distancia total
     if (newRuta.length > 1) {
-      const total = calcularDistanciaRuta(newRuta)
+      let total = 0
+      for (let i = 0; i < newRuta.length - 1; i++) {
+        const [lat1, lon1] = newRuta[i]
+        const [lat2, lon2] = newRuta[i + 1]
+        const R = 6371000
+        const dLat = (lat2 - lat1) * Math.PI / 180
+        const dLon = (lon2 - lon1) * Math.PI / 180
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+        total += R * c
+      }
       setDistanciaTotal(total)
-    }
-    
-    // Dibujar línea si hay más de un punto
-    if (newRuta.length > 1 && window.L) {
-      const L = window.L
-      const polyline = L.polyline(newRuta, {
-        color: '#00ff88',
-        weight: 3,
-        opacity: 0.8,
-        dashArray: '10, 5'
-      }).addTo(mapObj.current)
       
-      // Agregar marcador en el último punto
-      L.circleMarker(newPoint[newPoint.length - 1], {
-        radius: 6,
-        fillColor: '#00ff88',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8
-      }).addTo(mapObj.current)
+      if (window.L) {
+        const L = window.L
+        L.polyline([newRuta[newRuta.length - 2], newPoint], {
+          color: '#16a34a',
+          weight: 3,
+          opacity: 0.8,
+          dashArray: '10, 5'
+        }).addTo(mapObj.current)
+        
+        L.circleMarker(newPoint, {
+          radius: 6,
+          fillColor: '#16a34a',
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(mapObj.current)
+      }
     }
-  }, [medirDistancia, rutaPuntos])
+  }
 
-  // Agregar evento click para medición
   useEffect(() => {
     if (!mapObj.current) return
     
@@ -518,15 +381,13 @@ export default function MapaPage() {
         mapObj.current.getContainer().style.cursor = ''
       }
     }
-  }, [medirDistancia, handleMapClickMeasure])
+  }, [medirDistancia, rutaPuntos])
 
-  // Función para limpiar medición
-  const limpiarMedicion = useCallback(() => {
+  const limpiarMedicion = () => {
     setRutaPuntos([])
     setDistanciaTotal(0)
     setMedirDistancia(false)
     
-    // Limpiar capas de medición del mapa
     if (mapObj.current && window.L) {
       mapObj.current.eachLayer((layer) => {
         if (layer instanceof window.L.Polyline || layer instanceof window.L.CircleMarker) {
@@ -534,123 +395,34 @@ export default function MapaPage() {
         }
       })
     }
-  }, [])
-
-  // Función para actualizar ubicación de cliente
-  const actualizarUbicacionCliente = async (clienteId, lat, lng) => {
-    try {
-      await api(`/clientes/${clienteId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ latitud: lat, longitud: lng })
-      })
-      
-      // Actualizar estado local
-      setClientes(prev => prev.map(c => 
-        c.id === clienteId ? { ...c, latitud: lat, longitud: lng } : c
-      ))
-      
-      alertaExito('Ubicación actualizada correctamente')
-      setEditCoord(null)
-    } catch (error) {
-      console.error('Error actualizando ubicación:', error)
-      alertaError('Error al actualizar la ubicación')
-    }
   }
 
-  // Función para crear antena
-  const crearAntena = async () => {
-    try {
-      const antenaData = {
-        ...nuevaAntena,
-        latitud: contextMenu.lat,
-        longitud: contextMenu.lng
-      }
-      
-      await api('/antenas', {
-        method: 'POST',
-        body: JSON.stringify(antenaData)
-      })
-      
-      // Actualizar estado local
-      setAntenas(prev => [...prev, { ...antenaData, id: Date.now() }])
-      
-      alertaExito('Antena creada correctamente')
-      setShowModalAntena(false)
-      setNuevaAntena({
-        nombre: '',
-        latitud: 0,
-        longitud: 0,
-        banda_frecuencia: '',
-        potencia_watts: '',
-        alcance_approx_metros: '',
-        ubicacion_descripcion: '',
-        nota_tecnica: ''
-      })
-      setContextMenu(null)
-    } catch (error) {
-      console.error('Error creando antena:', error)
-      alertaError('Error al crear la antena')
-    }
-  }
-
-  // Función para crear punto de referencia
-  const crearPuntoRef = async () => {
-    try {
-      const puntoData = {
-        nombre: nuevoPunto.nombre,
-        latitud: contextMenu.lat,
-        longitud: contextMenu.lng,
-        ubicacion_descripcion: nuevoPunto.ubicacion_descripcion
-      }
-      
-      await api('/snacks', {
-        method: 'POST',
-        body: JSON.stringify(puntoData)
-      })
-      
-      // Actualizar estado local
-      setPuntosRef(prev => [...prev, { ...puntoData, id: Date.now() }])
-      
-      alertaExito('Punto de referencia creado correctamente')
-      setShowModalPunto(false)
-      setNuevoPunto({
-        nombre: '',
-        latitud: 0,
-        longitud: 0,
-        ubicacion_descripcion: ''
-      })
-      setContextMenu(null)
-    } catch (error) {
-      console.error('Error creando punto de referencia:', error)
-      alertaError('Error al crear el punto de referencia')
-    }
-  }
-
-  // Función para manejar click derecho en mapa
-  const handleMapRightClick = (e) => {
-    setContextMenu({
-      lat: e.latlng.lat,
-      lng: e.latlng.lng,
-      x: e.originalEvent.clientX,
-      y: e.originalEvent.clientY
-    })
-  }
-
-  // Función para cerrar menú contextual
-  const cerrarContextMenu = () => {
-    setContextMenu(null)
-  }
-
-  // Cerrar menú contextual al hacer clic fuera
+  // Cerrar menú contextual
   useEffect(() => {
-    const handleClickOutside = () => cerrarContextMenu()
+    const handleClickOutside = () => setContextMenu(null)
     if (contextMenu) {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
     }
   }, [contextMenu])
 
-  // Estadísticas
+  // Funciones del menú contextual
+  const handleAddAntena = () => {
+    alert('Función de agregar antena en desarrollo')
+    setContextMenu(null)
+  }
+
+  const handleAddPunto = () => {
+    alert('Función de agregar punto en desarrollo')
+    setContextMenu(null)
+  }
+
+  const handleCopyCoords = () => {
+    navigator.clipboard.writeText(`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`)
+    alertaExito('Coordenadas copiadas')
+    setContextMenu(null)
+  }
+
   const stats = {
     totalClientes: clientes.length,
     clientesConUbicacion: clientes.filter(c => c.latitud && c.longitud).length,
@@ -668,16 +440,9 @@ export default function MapaPage() {
         justifyContent: 'center',
         alignItems: 'center',
         height: 'calc(100vh - 60px)',
-        background: 'var(--surface)'
+        background: '#f6f8fa'
       }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          border: '3px solid var(--outline-variant)',
-          borderTop: '3px solid var(--primary)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}/>
+        <div>Cargando mapa...</div>
       </div>
     )
   }
@@ -687,11 +452,10 @@ export default function MapaPage() {
       <style jsx>{`
         .mapa-container {
           position: relative;
-          background: var(--surface);
-          border-radius: 20px;
+          background: white;
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 8px 32px var(--shadow-color);
-          border: 1px solid var(--outline-variant);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.1);
           height: calc(100vh - 140px);
           min-height: 600px;
         }
@@ -707,27 +471,20 @@ export default function MapaPage() {
         .search-input {
           width: 100%;
           padding: 12px 16px;
-          border: 2px solid var(--outline-variant);
-          border-radius: 16px;
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          color: var(--on-surface);
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          background: white;
+          color: #1f2937;
           font-size: 14px;
           font-family: 'Inter', sans-serif;
           outline: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 16px var(--shadow-color);
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .search-input:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 4px rgba(0, 107, 44, 0.1), 0 8px 24px var(--shadow-color);
-          transform: translateY(-1px);
-        }
-
-        .search-input::placeholder {
-          color: var(--on-surface-variant);
+          border-color: #16a34a;
+          box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
         }
 
         .search-results {
@@ -735,13 +492,11 @@ export default function MapaPage() {
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
-          max-height: 320px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          max-height: 300px;
           overflow-y: auto;
           z-index: 1001;
         }
@@ -749,20 +504,19 @@ export default function MapaPage() {
         .search-result-item {
           padding: 12px 16px;
           cursor: pointer;
-          transition: all 0.2s;
-          border-bottom: 1px solid var(--outline-variant);
+          transition: background 0.2s;
+          border-bottom: 1px solid #f1f5f9;
           display: flex;
           align-items: center;
           gap: 12px;
         }
 
-        .search-result-item:last-child {
-          border-bottom: none;
+        .search-result-item:hover {
+          background: #f8fafc;
         }
 
-        .search-result-item:hover {
-          background: var(--surface-container);
-          transform: translateX(4px);
+        .search-result-item:last-child {
+          border-bottom: none;
         }
 
         .search-result-icon {
@@ -780,7 +534,7 @@ export default function MapaPage() {
         .search-result-label {
           font-size: 13px;
           font-weight: 600;
-          color: var(--on-surface);
+          color: #1f2937;
           margin-bottom: 2px;
           white-space: nowrap;
           overflow: hidden;
@@ -789,7 +543,7 @@ export default function MapaPage() {
 
         .search-result-subtitle {
           font-size: 11px;
-          color: var(--on-surface-variant);
+          color: #6b7280;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -806,22 +560,20 @@ export default function MapaPage() {
         }
 
         .control-group {
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           padding: 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           min-width: 200px;
         }
 
         .control-title {
           font-size: 12px;
           font-weight: 700;
-          color: var(--on-surface-variant);
+          color: #6b7280;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 0.5px;
           margin-bottom: 12px;
         }
 
@@ -838,21 +590,21 @@ export default function MapaPage() {
 
         .control-label {
           font-size: 13px;
-          color: var(--on-surface);
+          color: #374151;
         }
 
         .toggle-switch {
           position: relative;
           width: 44px;
           height: 24px;
-          background: var(--surface-container-high);
+          background: #e5e7eb;
           border-radius: 12px;
           cursor: pointer;
-          transition: background 0.3s;
+          transition: background 0.2s;
         }
 
         .toggle-switch.active {
-          background: var(--primary);
+          background: #16a34a;
         }
 
         .toggle-switch::after {
@@ -864,7 +616,7 @@ export default function MapaPage() {
           height: 20px;
           background: white;
           border-radius: 50%;
-          transition: transform 0.3s;
+          transition: transform 0.2s;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
@@ -875,7 +627,7 @@ export default function MapaPage() {
         .btn-control {
           padding: 8px 16px;
           border: none;
-          border-radius: 10px;
+          border-radius: 8px;
           font-size: 12px;
           font-weight: 600;
           cursor: pointer;
@@ -889,36 +641,31 @@ export default function MapaPage() {
         }
 
         .btn-primary {
-          background: var(--primary);
-          color: var(--on-primary);
-          box-shadow: 0 2px 8px rgba(0, 107, 44, 0.3);
+          background: #16a34a;
+          color: white;
         }
 
         .btn-primary:hover {
-          background: var(--primary-container);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 16px rgba(0, 107, 44, 0.35);
+          background: #15803d;
         }
 
         .btn-secondary {
-          background: var(--surface-container);
-          color: var(--on-surface);
-          border: 1px solid var(--outline-variant);
+          background: #f8fafc;
+          color: #374151;
+          border: 1px solid #e2e8f0;
         }
 
         .btn-secondary:hover {
-          background: var(--surface-container-high);
-          transform: translateY(-1px);
+          background: #f1f5f9;
         }
 
         .btn-danger {
-          background: var(--tertiary-container);
-          color: var(--on-tertiary);
+          background: #fee2e2;
+          color: #991b1b;
         }
 
         .btn-danger:hover {
-          background: var(--tertiary);
-          transform: translateY(-1px);
+          background: #fecaca;
         }
 
         .stats-panel {
@@ -933,32 +680,30 @@ export default function MapaPage() {
         }
 
         .stat-card {
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           padding: 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
-          transition: all 0.3s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transition: all 0.2s;
         }
 
         .stat-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 40px var(--shadow-color);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
 
         .stat-value {
           font-size: 24px;
           font-weight: 700;
-          color: var(--primary);
+          color: #16a34a;
           margin-bottom: 4px;
           font-family: 'JetBrains Mono', monospace;
         }
 
         .stat-label {
           font-size: 11px;
-          color: var(--on-surface-variant);
+          color: #6b7280;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -967,13 +712,11 @@ export default function MapaPage() {
           position: absolute;
           top: 80px;
           left: 20px;
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           padding: 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           z-index: 1000;
           min-width: 200px;
         }
@@ -981,69 +724,38 @@ export default function MapaPage() {
         .medicion-value {
           font-size: 20px;
           font-weight: 700;
-          color: var(--primary);
+          color: #16a34a;
           margin-bottom: 8px;
           font-family: 'JetBrains Mono', monospace;
         }
 
         .medicion-label {
           font-size: 12px;
-          color: var(--on-surface-variant);
+          color: #6b7280;
           margin-bottom: 12px;
-        }
-
-        .coordinates-display {
-          position: absolute;
-          bottom: 20px;
-          right: 20px;
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
-          padding: 12px 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
-          z-index: 1000;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          color: var(--on-surface-variant);
         }
 
         .gn-context-menu {
           position: fixed;
-          background: var(--glass-bg);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--outline-variant);
-          border-radius: 16px;
-          box-shadow: 0 8px 32px var(--shadow-color);
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
           z-index: 10000;
-          min-width: 200px;
+          min-width: 180px;
           padding: 8px;
-          animation: contextMenuAppear 0.2s ease-out;
-        }
-
-        @keyframes contextMenuAppear {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
         }
 
         .gn-context-menu-item {
           padding: 10px 14px;
-          border-radius: 10px;
+          border-radius: 8px;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s;
           display: flex;
           align-items: center;
           gap: 10px;
           font-size: 13px;
-          color: var(--on-surface);
+          color: #374151;
           border: none;
           background: none;
           width: 100%;
@@ -1051,118 +763,13 @@ export default function MapaPage() {
         }
 
         .gn-context-menu-item:hover {
-          background: var(--surface-container);
-          transform: translateX(4px);
+          background: #f8fafc;
         }
 
         .gn-context-menu-icon {
           width: 16px;
           height: 16px;
           opacity: 0.7;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.5);
-          z-index: 300;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          animation: fadeIn 0.15s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .modal {
-          background: var(--surface-container-lowest);
-          border: 1px solid var(--outline-variant);
-          border-radius: 24px;
-          width: 100%;
-          max-width: 600px;
-          max-height: 90vh;
-          overflow-y: auto;
-          box-shadow: 0 20px 60px var(--shadow-color);
-          animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        .modal-header {
-          padding: 24px 28px 20px;
-          border-bottom: 1px solid var(--outline-variant);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .modal-title {
-          font-size: 20px;
-          font-weight: 700;
-          color: var(--on-surface);
-          letter-spacing: -0.5px;
-        }
-
-        .modal-close {
-          background: none;
-          border: none;
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          cursor: pointer;
-          color: var(--on-surface-variant);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-          background: var(--surface-container);
-          color: var(--on-surface);
-        }
-
-        .modal-body {
-          padding: 24px 28px;
-        }
-
-        .modal-footer {
-          padding: 20px 28px;
-          border-top: 1px solid var(--outline-variant);
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.8;
-          }
-          50% {
-            transform: scale(1.1);
-            opacity: 0.4;
-          }
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -1182,10 +789,6 @@ export default function MapaPage() {
             left: 10px;
             right: 10px;
             grid-template-columns: repeat(2, 1fr);
-          }
-
-          .coordinates-display {
-            display: none;
           }
 
           .medicion-info {
@@ -1267,6 +870,55 @@ export default function MapaPage() {
             </div>
           </div>
 
+          {/* Estados de Clientes */}
+          <div className="control-group">
+            <div className="control-title">Estados Clientes</div>
+            
+            <div className="control-item">
+              <span className="control-label">Activos</span>
+              <div 
+                className={`toggle-switch ${filters.estados.Activo ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  estados: { ...prev.estados, Activo: !prev.estados.Activo }
+                }))}
+              />
+            </div>
+            
+            <div className="control-item">
+              <span className="control-label">Deudores</span>
+              <div 
+                className={`toggle-switch ${filters.estados.Deudor ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  estados: { ...prev.estados, Deudor: !prev.estados.Deudor }
+                }))}
+              />
+            </div>
+            
+            <div className="control-item">
+              <span className="control-label">Cortados</span>
+              <div 
+                className={`toggle-switch ${filters.estados.Cortado ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  estados: { ...prev.estados, Cortado: !prev.estados.Cortado }
+                }))}
+              />
+            </div>
+            
+            <div className="control-item">
+              <span className="control-label">Suspendidos</span>
+              <div 
+                className={`toggle-switch ${filters.estados.Suspendido ? 'active' : ''}`}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  estados: { ...prev.estados, Suspendido: !prev.estados.Suspendido }
+                }))}
+              />
+            </div>
+          </div>
+
           {/* Herramientas */}
           <div className="control-group">
             <div className="control-title">Herramientas</div>
@@ -1279,7 +931,7 @@ export default function MapaPage() {
             </button>
             
             {medirDistancia && (
-              <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--on-surface-variant)' }}>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
                 Click en el mapa para medir
               </div>
             )}
@@ -1301,6 +953,7 @@ export default function MapaPage() {
             <button
               className="btn-control btn-danger"
               onClick={limpiarMedicion}
+              style={{ marginTop: '12px' }}
             >
               🗑️ Limpiar
             </button>
@@ -1340,21 +993,14 @@ export default function MapaPage() {
           </div>
           
           {stats.reportesActivos > 0 && (
-            <div className="stat-card" style={{ border: '2px solid var(--tertiary)' }}>
-              <div className="stat-value" style={{ color: 'var(--tertiary)' }}>
+            <div className="stat-card" style={{ border: '2px solid #ef4444' }}>
+              <div className="stat-value" style={{ color: '#ef4444' }}>
                 {stats.reportesActivos}
               </div>
               <div className="stat-label">Reportes Activos</div>
             </div>
           )}
         </div>
-
-        {/* Coordenadas del Mouse */}
-        {editCoord && (
-          <div className="coordinates-display">
-            📍 {editCoord.lat.toFixed(6)}, {editCoord.lng.toFixed(6)}
-          </div>
-        )}
 
         {/* Menú Contextual */}
         {contextMenu && (
@@ -1365,37 +1011,29 @@ export default function MapaPage() {
               top: `${contextMenu.y}px`
             }}
           >
-            <button
-              className="gn-context-menu-item"
-              onClick={() => {
-                setNuevaAntena(prev => ({ ...prev, latitud: contextMenu.lat, longitud: contextMenu.lng }))
-                setShowModalAntena(true)
-                cerrarContextMenu()
-              }}
-            >
-              <span className="gn-context-menu-icon">🗼</span>
-              Agregar Antena
-            </button>
+            {canWrite && (
+              <button
+                className="gn-context-menu-item"
+                onClick={handleAddAntena}
+              >
+                <span className="gn-context-menu-icon">🗼</span>
+                Agregar Antena
+              </button>
+            )}
+            
+            {canWrite && (
+              <button
+                className="gn-context-menu-item"
+                onClick={handleAddPunto}
+              >
+                <span className="gn-context-menu-icon">📍</span>
+                Agregar Punto Ref.
+              </button>
+            )}
             
             <button
               className="gn-context-menu-item"
-              onClick={() => {
-                setNuevoPunto(prev => ({ ...prev, latitud: contextMenu.lat, longitud: contextMenu.lng }))
-                setShowModalPunto(true)
-                cerrarContextMenu()
-              }}
-            >
-              <span className="gn-context-menu-icon">📍</span>
-              Agregar Punto Ref.
-            </button>
-            
-            <button
-              className="gn-context-menu-item"
-              onClick={() => {
-                navigator.clipboard.writeText(`${contextMenu.lat}, ${contextMenu.lng}`)
-                alertaExito('Coordenadas copiadas')
-                cerrarContextMenu()
-              }}
+              onClick={handleCopyCoords}
             >
               <span className="gn-context-menu-icon">📋</span>
               Copiar Coordenadas
@@ -1403,187 +1041,11 @@ export default function MapaPage() {
             
             <button
               className="gn-context-menu-item"
-              onClick={cerrarContextMenu}
+              onClick={() => setContextMenu(null)}
             >
               <span className="gn-context-menu-icon">❌</span>
               Cancelar
             </button>
-          </div>
-        )}
-
-        {/* Modal para Nueva Antena */}
-        {showModalAntena && (
-          <div className="modal-backdrop" onClick={() => setShowModalAntena(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">🗼 Nueva Antena</h2>
-                <button className="modal-close" onClick={() => setShowModalAntena(false)}>
-                  ✕
-                </button>
-              </div>
-              
-              <div className="modal-body">
-                <div className="form-row" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Nombre</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={nuevaAntena.nombre}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, nombre: e.target.value }))}
-                      placeholder="Nombre de la antena"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row cols-2" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Banda Frecuencia</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={nuevaAntena.banda_frecuencia}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, banda_frecuencia: e.target.value }))}
-                      placeholder="Ej: 2.4 GHz"
-                    />
-                  </div>
-                  
-                  <div className="field-group">
-                    <label className="field-label">Potencia (Watts)</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={nuevaAntena.potencia_watts}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, potencia_watts: e.target.value }))}
-                      placeholder="Ej: 100"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row cols-2" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Alcance (metros)</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={nuevaAntena.alcance_approx_metros}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, alcance_approx_metros: e.target.value }))}
-                      placeholder="Ej: 500"
-                    />
-                  </div>
-                  
-                  <div className="field-group">
-                    <label className="field-label">Coordenadas</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`}
-                      disabled
-                      style={{ background: 'var(--surface-container)' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Descripción Ubicación</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={nuevaAntena.ubicacion_descripcion}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, ubicacion_descripcion: e.target.value }))}
-                      placeholder="Descripción de la ubicación"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="field-group">
-                    <label className="field-label">Nota Técnica</label>
-                    <textarea
-                      className="input"
-                      value={nuevaAntena.nota_tecnica}
-                      onChange={(e) => setNuevaAntena(prev => ({ ...prev, nota_tecnica: e.target.value }))}
-                      placeholder="Notas técnicas adicionales"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setShowModalAntena(false)}>
-                  Cancelar
-                </button>
-                <button className="btn btn-primary" onClick={crearAntena}>
-                  Crear Antena
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal para Nuevo Punto de Referencia */}
-        {showModalPunto && (
-          <div className="modal-backdrop" onClick={() => setShowModalPunto(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">📍 Nuevo Punto de Referencia</h2>
-                <button className="modal-close" onClick={() => setShowModalPunto(false)}>
-                  ✕
-                </button>
-              </div>
-              
-              <div className="modal-body">
-                <div className="form-row" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Nombre</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={nuevoPunto.nombre}
-                      onChange={(e) => setNuevoPunto(prev => ({ ...prev, nombre: e.target.value }))}
-                      placeholder="Nombre del punto de referencia"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ marginBottom: '16px' }}>
-                  <div className="field-group">
-                    <label className="field-label">Descripción</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={nuevoPunto.ubicacion_descripcion}
-                      onChange={(e) => setNuevoPunto(prev => ({ ...prev, ubicacion_descripcion: e.target.value }))}
-                      placeholder="Descripción de la ubicación"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="field-group">
-                    <label className="field-label">Coordenadas</label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`}
-                      disabled
-                      style={{ background: 'var(--surface-container)' }}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setShowModalPunto(false)}>
-                  Cancelar
-                </button>
-                <button className="btn btn-primary" onClick={crearPuntoRef}>
-                  Crear Punto
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>

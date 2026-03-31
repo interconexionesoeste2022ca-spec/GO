@@ -1,0 +1,5 @@
+{
+  "name": "Galanet Oeste - Gestión de Red",
+  "description": "Plataforma integral para la gestión de clientes, monitoreo de red e incidencias técnicas para Galanet Oeste.",
+  "requestFramePermissions": ["geolocation"]
+}
