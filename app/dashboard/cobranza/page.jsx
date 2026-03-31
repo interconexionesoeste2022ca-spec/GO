@@ -8,7 +8,7 @@ const MESES = Array.from({ length: 6 }, (_, i) => {
 })
 
 const ESTADO_CFG = {
-  pagado:                   { label: 'Pagado',          bg: '#dcfce7', color: '#166534', dot: '#16a34a' },
+  pagado:                   { label: 'Pagado',          bg: 'var(--tertiary-container)', color: 'var(--on-tertiary-container)', dot: 'var(--tertiary)' },
   pendiente_verificacion:   { label: 'Por verificar',   bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
   por_vencer:               { label: 'Por vencer',      bg: '#fef9c3', color: '#854d0e', dot: '#eab308' },
   sin_pagar:                { label: 'Sin pagar',       bg: '#fee2e2', color: '#991b1b', dot: '#dc2626' },
@@ -86,8 +86,8 @@ export default function CobranzaPage() {
                   {resumen.pagados} de {resumen.total} clientes · ${formatUSD(resumen.monto_cobrado)} / ${formatUSD(resumen.monto_esperado)} USD
                 </div>
               </div>
-              <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:26, fontWeight:700,
-                color: porcentaje >= 80 ? '#16a34a' : porcentaje >= 50 ? '#d97706' : '#dc2626' }}>
+              <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:26, fontWeight:700,
+                color: porcentaje >= 80 ? 'var(--tertiary)' : porcentaje >= 50 ? 'var(--error)' : 'var(--error)' }}>
                 {porcentaje}%
               </div>
             </div>
@@ -95,7 +95,7 @@ export default function CobranzaPage() {
               <div style={{
                 height:'100%', borderRadius:20,
                 width:`${porcentaje}%`,
-                background: porcentaje >= 80 ? '#16a34a' : porcentaje >= 50 ? '#eab308' : '#dc2626',
+                background: porcentaje >= 80 ? 'var(--tertiary)' : porcentaje >= 50 ? 'var(--error)' : 'var(--error)',
                 transition:'width .6s ease',
               }} />
             </div>
@@ -120,7 +120,7 @@ export default function CobranzaPage() {
       <div className="card" style={{ padding:0, overflow:'hidden' }}>
         {loading ? (
           <div className="empty">
-            <div style={{ width:24, height:24, border:'2px solid #e2e8f0', borderTop:'2px solid #16a34a', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto' }} />
+            <div style={{ width:24, height:24, border:'2px solid var(--outline)', borderTop:'2px solid var(--tertiary)', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto' }} />
           </div>
         ) : filtrados.length === 0 ? (
           <div className="empty">Sin clientes para mostrar</div>
@@ -145,15 +145,15 @@ export default function CobranzaPage() {
                     <tr key={c.id}>
                       <td>
                         <div style={{ fontWeight:600, fontSize:13, color:'#0f172a' }}>{c.nombre_razon_social}</div>
-                        <div style={{ fontSize:11, color:'#94a3b8', fontFamily:'JetBrains Mono,monospace' }}>{c.documento_identidad}</div>
+                        <div style={{ fontSize:11, color:'var(--on-surface-variant)', fontFamily:'IBM Plex Mono,monospace' }}>{c.documento_identidad}</div>
                       </td>
                       <td style={{ fontSize:12, color:'#64748b' }}>{c.zona_sector || '—'}</td>
                       <td>
                         <div style={{ fontSize:12, fontWeight:500 }}>{c.plan_nombre}</div>
-                        <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:12, color:'#16a34a', fontWeight:600 }}>${formatUSD(c.monto_usd)}</div>
+                        <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:12, color:'var(--tertiary)', fontWeight:600 }}>${formatUSD(c.monto_usd)}</div>
                       </td>
                       <td>
-                        <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:13, fontWeight:600, color:'#0f172a' }}>
+                        <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:13, fontWeight:600, color:'var(--on-surface)' }}>
                           Día {c.dia_corte || 1}
                         </div>
                         {c.estado_cobro === 'sin_pagar' && (
@@ -186,7 +186,7 @@ export default function CobranzaPage() {
                       <td>
                         {c.pago ? (
                           <div>
-                            <div style={{ fontSize:12, fontWeight:600, color:'#16a34a' }}>
+                            <div style={{ fontSize:12, fontWeight:600, color:'var(--tertiary)' }}>
                               ${formatUSD(c.pago.monto_usd_real || c.pago.monto_facturado_usd)}
                             </div>
                             <div style={{ fontSize:11, color:'#94a3b8' }}>{c.pago.tipo_pago} · {c.pago.fecha_pago}</div>
@@ -199,7 +199,7 @@ export default function CobranzaPage() {
                         <div style={{ display:'flex', gap:6 }}>
                           {c.telefono && (
                             <a href={`tel:${c.telefono}`}
-                              style={{ padding:'4px 9px', borderRadius:7, background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#16a34a', fontSize:11, fontWeight:600, textDecoration:'none' }}>
+                              style={{ padding:'4px 9px', borderRadius:7, background:'var(--tertiary-container)', border:'none', color:'var(--on-tertiary-container)', fontSize:11, fontWeight:600, textDecoration:'none' }}>
                               📞
                             </a>
                           )}
@@ -241,12 +241,12 @@ export default function CobranzaPage() {
                   <div style={{ fontSize:13, fontWeight:600, color:'#0f172a', marginBottom:8 }}>{z}</div>
                   <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'#64748b', marginBottom:8 }}>
                     <span>{pagadosZona}/{clientesZona.length} pagados</span>
-                    <span style={{ fontFamily:'JetBrains Mono,monospace', color:'#16a34a', fontWeight:600 }}>{pct}%</span>
+                    <span style={{ fontFamily:'IBM Plex Mono,monospace', color:'var(--tertiary)', fontWeight:600 }}>{pct}%</span>
                   </div>
                   <div style={{ height:6, background:'#e2e8f0', borderRadius:10, overflow:'hidden' }}>
-                    <div style={{ height:'100%', width:`${pct}%`, background:'#16a34a', borderRadius:10 }} />
+                    <div style={{ height:'100%', width:`${pct}%`, background:'var(--tertiary)', borderRadius:10 }} />
                   </div>
-                  <div style={{ fontSize:11, color:'#94a3b8', marginTop:6, fontFamily:'JetBrains Mono,monospace' }}>
+                  <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginTop:6, fontFamily:'IBM Plex Mono,monospace' }}>
                     ${formatUSD(montoZona)} cobrado
                   </div>
                 </div>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary": "#526074",
+              "outline": "#717c82",
+              "tertiary": "#006d4b",
+              "on-tertiary-fixed": "#00452e",
+              "primary-container": "#d6e4f9",
+              "on-secondary-fixed": "#324053",
+              "on-primary": "#f5f8ff",
+              "on-primary-fixed": "#334051",
+              "on-background": "#2a3439",
+              "surface-variant": "#d9e4ea",
+              "primary-fixed-dim": "#c8d5ea",
+              "secondary-dim": "#465468",
+              "on-secondary-container": "#455367",
+              "tertiary-fixed": "#7ff3be",
+              "error-container": "#fe8983",
+              "secondary-container": "#d5e3fc",
+              "on-error-container": "#752121",
+              "surface-container-highest": "#d9e4ea",
+              "tertiary-container": "#7ff3be",
+              "surface-container-low": "#f0f4f7",
+              "primary-dim": "#465365",
+              "surface-container-high": "#e1e9ee",
+              "on-surface": "#2a3439",
+              "tertiary-fixed-dim": "#71e4b1",
+              "primary": "#525f71",
+              "outline-variant": "#a9b4b9",
+              "on-error": "#fff7f6",
+              "inverse-primary": "#d8e6fc",
+              "on-primary-container": "#455364",
+              "tertiary-dim": "#005f41",
+              "on-tertiary-fixed-variant": "#006545",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary": "#e6ffef",
+              "on-tertiary-container": "#005a3d",
+              "secondary-fixed": "#d5e3fc",
+              "on-primary-fixed-variant": "#4f5d6e",
+              "surface": "#f7f9fb",
+              "surface-dim": "#cfdce3",
+              "background": "#f7f9fb",
+              "on-secondary": "#f8f8ff",
+              "surface-bright": "#f7f9fb",
+              "primary-fixed": "#d6e4f9",
+              "inverse-on-surface": "#9a9d9f",
+              "inverse-surface": "#0b0f10",
+              "on-secondary-fixed-variant": "#4e5c71",
+              "surface-tint": "#525f71",
+              "error": "#9f403d",
+              "error-dim": "#4e0309",
+              "on-surface-variant": "#566166",
+              "secondary-fixed-dim": "#c7d5ed",
+              "surface-container": "#e8eff3"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-slate-50 dark:bg-slate-900 flex flex-col py-6 transition-colors duration-200">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-lg">router</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-manrope">Galant Admin</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Network Ops</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-200/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-inter tracking-wide text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-200/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-inter tracking-wide text-sm">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-200/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-inter tracking-wide text-sm">Map</span>
+</a>
+<!-- Active Tab: Plans -->
+<a class="flex items-center gap-3 px-6 py-3 text-emerald-700 dark:text-emerald-400 font-semibold border-r-4 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="font-inter tracking-wide text-sm">Plans</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-200/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-inter tracking-wide text-sm">Payments</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-200/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-inter tracking-wide text-sm">Reports</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="p-4 rounded-xl bg-slate-200/30 dark:bg-slate-800 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="professional portrait of a network administrator wearing a clean navy shirt in a bright office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkWQNjZBoRxBxowQ1nfG6AhyVAbSUqbAA0og_B947tfS1qtjFZxcfK6C2mS_by6snInVo1XQxWptsOS7By7dh2VsfBrGbb23_muTUScvzymNazWpfMt4GvqGEzhNuBjagNSFpE0dbqbSn-4nCOr2Y84d26f5_EvlZ_NrPcq90qeKMZp335zxQu0G3OybAGWueqgqG7Qa9u3AN5Af8PPXsgHY_uu63gW3IFkFWtmSc60YKebnXoM7Hov3n1MYw4EcRB6p3Zn1Yq2s09"/>
+</div>
+<div class="overflow-hidden">
+<p class="text-sm font-semibold truncate text-slate-800 dark:text-slate-100">Admin User</p>
+<p class="text-xs text-slate-500 truncate">System Manager</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 w-full h-16 px-8 flex justify-between items-center bg-white/80 backdrop-blur-md shadow-sm dark:shadow-none border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center bg-surface-container-low px-4 py-2 rounded-lg w-96">
+<span class="material-symbols-outlined text-outline text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 w-full font-inter text-on-surface-variant" placeholder="Search network nodes, plans or clients..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:text-emerald-500 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-500 hover:text-emerald-500 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200"></div>
+<button class="bg-tertiary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span>Add New Plan</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-10 max-w-7xl mx-auto w-full">
+<!-- Page Title Section -->
+<div class="mb-12 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface mb-2">Connectivity Plans</h2>
+<p class="text-on-surface-variant font-body text-sm max-w-md">Manage and monitor commercial internet service offerings across the fiber optic infrastructure.</p>
+</div>
+<div class="flex gap-4">
+<div class="px-4 py-3 bg-surface-container-low rounded-xl text-center min-w-[120px]">
+<p class="text-[10px] uppercase font-bold tracking-widest text-outline mb-1">Total Active</p>
+<p class="text-2xl font-bold font-headline text-primary">1,284</p>
+</div>
+<div class="px-4 py-3 bg-surface-container-low rounded-xl text-center min-w-[120px]">
+<p class="text-[10px] uppercase font-bold tracking-widest text-outline mb-1">Growth</p>
+<p class="text-2xl font-bold font-headline text-tertiary">+12%</p>
+</div>
+</div>
+</div>
+<!-- Bento Grid of Plans -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Card 1: Plan Exonerado -->
+<div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between group hover:shadow-lg hover:shadow-on-surface/5 transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">Active</span>
+</div>
+<div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary mb-6">
+<span class="material-symbols-outlined text-2xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h3 class="text-lg font-bold font-headline text-on-surface mb-1">Plan Exonerado</h3>
+<p class="text-xs text-outline font-body mb-6">Legacy / Social Benefits</p>
+<div class="space-y-3 mb-8">
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Speed</span>
+<span class="text-sm font-semibold text-primary">10 Mbps</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Technology</span>
+<span class="text-sm font-semibold text-primary">Fiber Optic</span>
+</div>
+</div>
+</div>
+<div>
+<div class="text-3xl font-headline font-bold text-on-surface mb-4">$11.60<span class="text-xs font-normal text-outline">/mo</span></div>
+<button class="w-full py-2 bg-surface-container-high rounded-lg text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Details</button>
+</div>
+</div>
+<!-- Card 2: Básico 50Mb -->
+<div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between group hover:shadow-lg hover:shadow-on-surface/5 transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">Active</span>
+</div>
+<div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary mb-6">
+<span class="material-symbols-outlined text-2xl" data-icon="bolt">bolt</span>
+</div>
+<h3 class="text-lg font-bold font-headline text-on-surface mb-1">Básico 50Mb</h3>
+<p class="text-xs text-outline font-body mb-6">Entry Level Personal</p>
+<div class="space-y-3 mb-8">
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Speed</span>
+<span class="text-sm font-semibold text-primary">50 Mbps</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Technology</span>
+<span class="text-sm font-semibold text-primary">Fiber FTTH</span>
+</div>
+</div>
+</div>
+<div>
+<div class="text-3xl font-headline font-bold text-on-surface mb-4">$20.00<span class="text-xs font-normal text-outline">/mo</span></div>
+<button class="w-full py-2 bg-surface-container-high rounded-lg text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Details</button>
+</div>
+</div>
+<!-- Card 3: Plan 150Mb -->
+<div class="bg-primary text-on-primary rounded-xl p-6 flex flex-col justify-between group shadow-xl shadow-primary/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-400 text-emerald-950 text-[10px] font-bold uppercase tracking-wider">Popular</span>
+</div>
+<div>
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary-container mb-6">
+<span class="material-symbols-outlined text-2xl" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<h3 class="text-lg font-bold font-headline mb-1">Plan 150Mb</h3>
+<p class="text-xs text-primary-fixed-dim font-body mb-6">Family &amp; Streaming</p>
+<div class="space-y-3 mb-8">
+<div class="flex items-center justify-between border-b border-white/10 pb-2">
+<span class="text-[11px] uppercase tracking-wider font-bold opacity-70">Speed</span>
+<span class="text-sm font-semibold">150 Mbps</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/10 pb-2">
+<span class="text-[11px] uppercase tracking-wider font-bold opacity-70">Technology</span>
+<span class="text-sm font-semibold">Fiber FTTH</span>
+</div>
+</div>
+</div>
+<div>
+<div class="text-3xl font-headline font-bold mb-4">$25.00<span class="text-xs font-normal opacity-70">/mo</span></div>
+<button class="w-full py-2 bg-white text-primary rounded-lg text-sm font-bold hover:bg-primary-container transition-colors">Manage</button>
+</div>
+</div>
+<!-- Card 4: Plus 250Mb -->
+<div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between group hover:shadow-lg hover:shadow-on-surface/5 transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">Active</span>
+</div>
+<div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary mb-6">
+<span class="material-symbols-outlined text-2xl" data-icon="speed">speed</span>
+</div>
+<h3 class="text-lg font-bold font-headline text-on-surface mb-1">Plus 250Mb</h3>
+<p class="text-xs text-outline font-body mb-6">Power Users &amp; Gaming</p>
+<div class="space-y-3 mb-8">
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Speed</span>
+<span class="text-sm font-semibold text-primary">250 Mbps</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Technology</span>
+<span class="text-sm font-semibold text-primary">Symmetric Fiber</span>
+</div>
+</div>
+</div>
+<div>
+<div class="text-3xl font-headline font-bold text-on-surface mb-4">$30.00<span class="text-xs font-normal text-outline">/mo</span></div>
+<button class="w-full py-2 bg-surface-container-high rounded-lg text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Details</button>
+</div>
+</div>
+</div>
+<!-- Detailed Management Section (Editorial Pattern) -->
+<div class="mt-16 grid grid-cols-12 gap-8">
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-low rounded-2xl p-8">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold font-headline">Recent Subscription Activity</h3>
+<button class="text-sm font-bold text-tertiary flex items-center gap-1">
+                                View Full Logs <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Table-like entries without borders -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">New Client: Carlos Mendoza</p>
+<p class="text-[10px] text-outline uppercase tracking-wider font-bold">Plus 250Mb Plan</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface">+$30.00</p>
+<p class="text-xs text-outline">2 mins ago</p>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest/50 rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined" data-icon="sync_alt">sync_alt</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Plan Upgrade: Maria Silva</p>
+<p class="text-[10px] text-outline uppercase tracking-wider font-bold">Básico 50Mb → Plan 150Mb</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface">+$5.00</p>
+<p class="text-xs text-outline">1 hour ago</p>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest/30 rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Installation Complete: Block C-14</p>
+<p class="text-[10px] text-outline uppercase tracking-wider font-bold">Plan 150Mb</p>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold">COMPLETED</span>
+<p class="text-xs text-outline">3 hours ago</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Featured Infrastructure Image/Promo -->
+<div class="col-span-12 lg:col-span-4">
+<div class="relative h-full rounded-2xl overflow-hidden group">
+<img class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="modern industrial server room with glowing blue network cables and clean white architecture reflecting high speed infrastructure" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCE8feLMOX2-tHIs82D-lX95gMYuChyColWfqy8BxCz2NW31YYEVX5tpXI8r36Cl_AyHDxM3fARlBxw2yUp4fXWlC8AVNep0s-AXFDTzKvfVnSCLCMI7uI-ZpN896ANdqdeMK3Wo6jZ4HcZLrHgss2TKQWg5oCgB0dmUhL1z3EPTvHHqoO13vzV8s1zLVb_pjRJWtqAAzXi3YtTdVYkEscFIQyggBS9xemXapGrHar0oKw-aueB-jgZnmGfH0-Cgi-ott-fQ_kDlYGK"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 p-8">
+<span class="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4 block">Infrastructure Insights</span>
+<h4 class="text-2xl font-headline font-bold text-white mb-4">Fiber Core Performance</h4>
+<p class="text-white/70 text-sm mb-6 font-body">Real-time load balancing across the northern sector nodes is now optimized for the 250Mb tier.</p>
+<button class="flex items-center gap-2 text-white font-bold text-sm">
+                                Open Dashboard <span class="material-symbols-outlined" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

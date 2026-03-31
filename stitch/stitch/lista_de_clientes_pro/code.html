@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Galant Admin | Clients</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary": "#526074",
+              "outline": "#717c82",
+              "tertiary": "#006d4b",
+              "on-tertiary-fixed": "#00452e",
+              "primary-container": "#d6e4f9",
+              "on-secondary-fixed": "#324053",
+              "on-primary": "#f5f8ff",
+              "on-primary-fixed": "#334051",
+              "on-background": "#2a3439",
+              "surface-variant": "#d9e4ea",
+              "primary-fixed-dim": "#c8d5ea",
+              "secondary-dim": "#465468",
+              "on-secondary-container": "#455367",
+              "tertiary-fixed": "#7ff3be",
+              "error-container": "#fe8983",
+              "secondary-container": "#d5e3fc",
+              "on-error-container": "#752121",
+              "surface-container-highest": "#d9e4ea",
+              "tertiary-container": "#7ff3be",
+              "surface-container-low": "#f0f4f7",
+              "primary-dim": "#465365",
+              "surface-container-high": "#e1e9ee",
+              "on-surface": "#2a3439",
+              "tertiary-fixed-dim": "#71e4b1",
+              "primary": "#525f71",
+              "outline-variant": "#a9b4b9",
+              "on-error": "#fff7f6",
+              "inverse-primary": "#d8e6fc",
+              "on-primary-container": "#455364",
+              "tertiary-dim": "#005f41",
+              "on-tertiary-fixed-variant": "#006545",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary": "#e6ffef",
+              "on-tertiary-container": "#005a3d",
+              "secondary-fixed": "#d5e3fc",
+              "on-primary-fixed-variant": "#4f5d6e",
+              "surface": "#f7f9fb",
+              "surface-dim": "#cfdce3",
+              "background": "#f7f9fb",
+              "on-secondary": "#f8f8ff",
+              "surface-bright": "#f7f9fb",
+              "primary-fixed": "#d6e4f9",
+              "inverse-on-surface": "#9a9d9f",
+              "inverse-surface": "#0b0f10",
+              "on-secondary-fixed-variant": "#4e5c71",
+              "surface-tint": "#525f71",
+              "error": "#9f403d",
+              "error-dim": "#4e0309",
+              "on-surface-variant": "#566166",
+              "secondary-fixed-dim": "#c7d5ed",
+              "surface-container": "#e8eff3"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(247, 249, 251, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-slate-50 dark:bg-slate-900 flex flex-col py-6 transition-colors duration-200">
+<div class="px-8 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-tertiary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">router</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-manrope">Galant Admin</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Network Ops</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-inter tracking-wide font-medium">Dashboard</span>
+</a>
+<!-- Active State: Clients -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-emerald-700 dark:text-emerald-400 font-semibold border-r-4 border-emerald-600 bg-slate-200/50 dark:bg-slate-800" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-inter tracking-wide">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-inter tracking-wide font-medium">Map</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-inter tracking-wide font-medium">Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-inter tracking-wide font-medium">Payments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-inter tracking-wide font-medium">Reports</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="p-4 rounded-xl bg-surface-container-low flex items-center gap-3">
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG08wk_WqTEG43yS0-UD9T54mhttBBvrwXwuSmz1_YdQF2ALgkPwCpY7IMPRPfekuralrQ_TsldjWaOma4X4GXHLMHXtYRvaTJBP8KfLo4aMcxUegsqrt5V8bvV4NlI0W7XYyMFBiY8lpEEdgBxe_5OiBzfcTVFf9BmrT8NZ27I2W4ynKmqEJUA2z2Kfs1fOXAkNGzn7IboooRWPMsFTRpCyBomjSDKZ619HDGFFIxabeUzezM3Ir0ErzqWSGAd2uTFN_KoFad1DZN"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Chief Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 w-full ml-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 flex justify-between items-center h-16 px-8 shadow-sm dark:shadow-none transition-all duration-300">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" placeholder="Search customer name or ID..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-slate-500 hover:text-emerald-500 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="text-slate-500 hover:text-emerald-500 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 p-8 max-w-[1600px]">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Network Management</p>
+<h2 class="text-4xl font-headline font-extrabold text-on-background tracking-tight">Active Client Ledger</h2>
+</div>
+<button class="px-6 py-3 bg-tertiary text-on-tertiary rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-tertiary/20 hover:bg-tertiary-dim transition-all active:scale-95">
+<span class="material-symbols-outlined">add</span>
+                New Customer
+            </button>
+</div>
+<!-- Asymmetric Layout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Main Data Table Container (Left 8 Cols) -->
+<div class="lg:col-span-8 space-y-8">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 bg-surface-container-low flex justify-between items-center">
+<h3 class="font-headline font-bold text-lg text-primary">Customer Directory</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-white rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 hover:bg-white rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[10px] uppercase font-bold tracking-[0.08em] text-slate-500">Name / Identity</th>
+<th class="px-6 py-4 text-[10px] uppercase font-bold tracking-[0.08em] text-slate-500">Connection</th>
+<th class="px-6 py-4 text-[10px] uppercase font-bold tracking-[0.08em] text-slate-500">Plan</th>
+<th class="px-6 py-4 text-[10px] uppercase font-bold tracking-[0.08em] text-slate-500">Status</th>
+<th class="px-6 py-4 text-[10px] uppercase font-bold tracking-[0.08em] text-slate-500 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">Elena Rodriguez</span>
+<span class="text-xs text-slate-400 font-mono tracking-tighter">V-24.891.002</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium">+58 412-555-0192</span>
+<span class="text-xs text-slate-400">Zone A - Central North</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary">Fiber Pro 200</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Cutoff: 15th</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded-full uppercase tracking-wider">Active</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all" title="Edit">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+</button>
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all" title="Events">
+<span class="material-symbols-outlined text-xl">event_repeat</span>
+</button>
+<button class="p-2 text-error hover:bg-error-container hover:text-on-error-container rounded-lg transition-all" title="Delete">
+<span class="material-symbols-outlined text-xl">delete_outline</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">Julian Castelli</span>
+<span class="text-xs text-slate-400 font-mono tracking-tighter">J-31.442.110</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium">+58 424-998-2101</span>
+<span class="text-xs text-slate-400">Zone C - East Park</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary">Standard 50</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Cutoff: 01st</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-wider">Suspended</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">edit_note</span></button>
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">event_repeat</span></button>
+<button class="p-2 text-error hover:bg-error-container hover:text-on-error-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">delete_outline</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">Marina Solis</span>
+<span class="text-xs text-slate-400 font-mono tracking-tighter">V-19.002.341</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium">+58 416-221-8843</span>
+<span class="text-xs text-slate-400">Zone B - West Heights</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary">Fiber Pro 200</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Cutoff: 15th</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded-full uppercase tracking-wider">Active</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">edit_note</span></button>
+<button class="p-2 text-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">event_repeat</span></button>
+<button class="p-2 text-error hover:bg-error-container hover:text-on-error-container rounded-lg transition-all"><span class="material-symbols-outlined text-xl">delete_outline</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface border-t border-slate-100 flex justify-between items-center">
+<span class="text-xs text-slate-500 font-medium tracking-wide">Showing 3 of 1,284 clients</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-high text-primary"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high text-primary text-xs font-bold transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-high text-primary"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Payment Processing Sidebar (Right 4 Cols) -->
+<div class="lg:col-span-4 sticky top-24 space-y-6">
+<div class="bg-surface-container-low rounded-xl p-8 border border-white/40 shadow-xl shadow-slate-200/50">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-xl leading-tight">Post Payment</h3>
+<p class="text-xs text-slate-500 font-medium">Batch process reference numbers</p>
+</div>
+</div>
+<div class="space-y-5">
+<div class="space-y-2">
+<label class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Customer Search</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">person</span>
+<select class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 appearance-none">
+<option>Select Customer...</option>
+<option>Elena Rodriguez (V-24.891.002)</option>
+<option>Julian Castelli (J-31.442.110)</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Reference Numbers</label>
+<div class="space-y-2">
+<input class="w-full px-4 py-3 bg-surface-container-lowest border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 font-mono" placeholder="Ref: 449201" type="text"/>
+<input class="w-full px-4 py-3 bg-surface-container-lowest border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 font-mono" placeholder="Ref: 449202 (Optional)" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Proof of Payment</label>
+<div class="border-2 border-dashed border-slate-200 rounded-xl p-6 bg-surface-container-lowest hover:border-emerald-500/50 transition-colors cursor-pointer group text-center">
+<span class="material-symbols-outlined text-3xl text-slate-300 group-hover:text-emerald-500 transition-colors mb-2">cloud_upload</span>
+<p class="text-xs text-slate-500 font-medium">Click or drag &amp; drop screenshots</p>
+<p class="text-[10px] text-slate-400 mt-1">PNG, JPG up to 10MB</p>
+</div>
+</div>
+<div class="pt-4 border-t border-white/60">
+<div class="flex justify-between items-center mb-6">
+<span class="text-xs text-slate-500 font-medium">Total Amount</span>
+<span class="text-2xl font-headline font-extrabold text-on-background tracking-tighter">$45.00</span>
+</div>
+<button class="w-full py-4 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/10 hover:bg-on-background transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-xl">verified_user</span>
+                                Commit Transaction
+                            </button>
+</div>
+</div>
+</div>
+<!-- Recent Activity Mini-Card -->
+<div class="bg-white rounded-xl p-6 border border-slate-100">
+<h4 class="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-4">Quick Insights</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-xs text-slate-600">Active Nodes</span>
+<span class="text-xs font-bold text-tertiary">98.2%</span>
+</div>
+<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary w-[98.2%] h-full"></div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xs text-slate-600">Monthly Revenue Goal</span>
+<span class="text-xs font-bold text-primary">$12k / $15k</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

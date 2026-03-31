@@ -3,22 +3,45 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getSesion, tienePermiso, alertaExito, alertaError } from '@/lib/api'
 
 const ESTADO_COLOR = {
-  Activo:    { pin:'#16a34a', bg:'#dcfce7', txt:'#166534', ring:'#bbf7d0' },
-  Cortado:   { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b', ring:'#fecaca' },
-  Moroso:    { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e', ring:'#fde68a' },
-  Suspendido:{ pin:'#6b7280', bg:'#f1f5f9', txt:'#374151', ring:'#e2e8f0' },
+  Activo:    { pin:'#006d4b', bg:'#7ff3be', txt:'#005a3d', ring:'#71e4b1' }, // Tertiary Sentinel
+  Cortado:   { pin:'#9f403d', bg:'#fe8983', txt:'#752121', ring:'#fdb7b3' }, // Error Sentinel
+  Moroso:    { pin:'#525f71', bg:'#d6e4f9', txt:'#334051', ring:'#c8d5ea' }, // Primary Sentinel
+  Suspendido:{ pin:'#717c82', bg:'#d9e4ea', txt:'#566166', ring:'#a9b4b9' }, // Outline-variant Sentinel
 }
 
 // Iconos para diferentes tipos de ubicación
 const ICON_TYPES = {
-  cliente:   { color: '#16a34a', label: 'Cliente' },
-  antena:    { color: '#2563eb', label: 'Antena 📡' },
-  snack:     { color: '#f59e0b', label: 'Snack 🍔' },
+  cliente:   { color: '#006d4b', label: 'Clientes' },      // Tertiary Emerald
+  antena:    { color: '#525f71', label: 'Antenas' },       // Primary Navy
+  punto_ref: { color: '#717c82', label: 'Puntos de Referencia' }, // Outline
 }
 
 // Barquisimeto, Venezuela
 const BAR_LAT = 10.067
 const BAR_LNG = -69.347
+
+// ─── Función para calcular distancia entre 2 puntos (Haversine) ───
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+  const R = 6371000 // Radio de la Tierra en metros
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c // Distancia en metros
+}
+
+// ─── Función para calcular distancia total de una ruta ───
+function calcularDistanciaRuta(puntos) {
+  let total = 0
+  for (let i = 0; i < puntos.length - 1; i++) {
+    const [lat1, lon1] = puntos[i]
+    const [lat2, lon2] = puntos[i + 1]
+    total += calcularDistancia(lat1, lon1, lat2, lon2)
+  }
+  return total
+}
 
 function makeSvgPin(color) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
@@ -29,6 +52,23 @@ function makeSvgPin(color) {
       <path d="M16 1C7.715 1 1 7.715 1 16c0 11.25 15 25 15 25S31 27.25 31 16C31 7.715 24.285 1 16 1z"
         fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
       <circle cx="16" cy="16" r="5.5" fill="white" opacity="0.95"/>
+    </svg>
+  `)}`
+}
+
+// Ícono de cliente CON ALERTA (tiene reportes abiertos)
+function makeSvgPinAlerta(color) {
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46">
+      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
+      </filter>
+      <path d="M18 1C8.715 1 2 7.715 2 16c0 11.25 16 25 16 25S34 27.25 34 16C34 7.715 27.285 1 18 1z"
+        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
+      <circle cx="18" cy="16" r="5.5" fill="white" opacity="0.95"/>
+      <!-- Alerta roja -->
+      <circle cx="28" cy="6" r="6.5" fill="#dc2626" stroke="white" stroke-width="2"/>
+      <text x="28" y="10" font-size="12" font-weight="bold" text-anchor="middle" fill="white" font-family="Arial">!</text>
     </svg>
   `)}`
 }
@@ -51,18 +91,17 @@ function makeSvgAntena(color) {
   `)}`
 }
 
-// Ícono de snack (comida)
-function makeSvgSnack(color) {
+// Ícono de punto de referencia (marcador personalizado)
+function makeSvgPuntoReferencia(color) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="36" viewBox="0 0 32 36">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
       <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
         <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
       </filter>
-      <path d="M6 12 L8 4 L24 4 L26 12 Z" fill="${color}" stroke="white" stroke-width="1.5" filter="url(#sh)"/>
-      <rect x="4" y="12" width="24" height="14" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
-      <line x1="10" y1="12" x2="10" y2="26" stroke="white" stroke-width="1" opacity="0.5"/>
-      <line x1="16" y1="12" x2="16" y2="26" stroke="white" stroke-width="1" opacity="0.5"/>
-      <line x1="22" y1="12" x2="22" y2="26" stroke="white" stroke-width="1" opacity="0.5"/>
+      <path d="M16 1C7.715 1 1 7.715 1 16c0 11.25 15 25 15 25S31 27.25 31 16C31 7.715 24.285 1 16 1z"
+        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
+      <circle cx="16" cy="16" r="6" fill="white" opacity="0.2"/>
+      <circle cx="16" cy="16" r="3" fill="white" opacity="0.9"/>
     </svg>
   `)}`
 }
@@ -77,32 +116,39 @@ export default function MapaPage() {
 
   const [clientes, setClientes] = useState([])
   const [antenas,  setAntenas]  = useState([])
-  const [snacks,   setSnacks]   = useState([])
+  const [puntosRef, setPuntosRef] = useState([])
   const [planes,   setPlanes]   = useState([])
+  const [reportes, setReportes] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [leafletReady, setLeafletReady] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   const [filtro,   setFiltro]   = useState('')
   const [selected, setSelected] = useState(null)
-  const [selectedType, setSelectedType] = useState('cliente') // 'cliente' | 'antena' | 'snack'
+  const [selectedType, setSelectedType] = useState('cliente') // 'cliente' | 'antena' | 'punto_ref'
   const [editCoord, setEditCoord] = useState(null)
   const [saving,   setSaving]   = useState(false)
-  const [showMode, setShowMode] = useState('clientes') // 'clientes' | 'antenas' | 'snacks'
+  const [showMode, setShowMode] = useState('clientes') // 'clientes' | 'antenas' | 'puntos_ref'
+  const [modalForm, setModalForm] = useState(null) // null | 'nueva_antena' | 'nuevo_punto_ref'
+  const [formData, setFormData] = useState({})
+  const [formSaving, setFormSaving] = useState(false)
+  const [medidor, setMedidor] = useState({ activo: false, puntos: [], distanciaTotal: 0, polyline: null })
 
   // ─── Cargar datos ─────────────────────────────────────────────
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const [c, a, s, p] = await Promise.all([
+      const [c, a, s, p, rep] = await Promise.all([
         api.get('/api/clientes'),
         api.get('/api/antenas'),
         api.get('/api/snacks'),
-        api.get('/api/planes')
+        api.get('/api/planes'),
+        api.get('/api/reportes')
       ])
       setClientes(c.data || [])
       setAntenas(a.data || [])
-      setSnacks(s.data || [])
+      setPuntosRef(s.data || [])
       setPlanes(p.data || [])
+      setReportes(rep.data || [])
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
   }, [])
@@ -145,8 +191,16 @@ export default function MapaPage() {
       maxZoom: 19,
     }).addTo(map)
 
-    // Click en mapa para reubicar cliente seleccionado
+    // Click en mapa para reubicar cliente O agregar punto al medidor
     map.on('click', (e) => {
+      // Si el medidor está activo, agregar punto
+      if (medidor.activo) {
+        const nuevosPuntos = [...medidor.puntos, [e.latlng.lat, e.latlng.lng]]
+        const distacia_acum = calcularDistanciaRuta(nuevosPuntos)
+        setMedidor(p => ({...p, puntos: nuevosPuntos, distanciaTotal: distacia_acum}))
+        return
+      }
+      // Si no, comportamiento normal
       if (canWrite) {
         setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
       }
@@ -169,12 +223,15 @@ export default function MapaPage() {
     conCoords.forEach(c => {
       const cfg  = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
       const plan = planes.find(p => p.id === c.plan_id)
-
+      
+      // Verificar si el cliente tiene reportes abiertos
+      const tieneAlerta = reportes.some(r => r.cliente_id === c.id && r.estado === 'abierto')
+      
       const icon = L.icon({
-        iconUrl:    makeSvgPin(cfg.pin),
-        iconSize:   [32, 42],
-        iconAnchor: [16, 42],
-        popupAnchor:[0, -44],
+        iconUrl:    tieneAlerta ? makeSvgPinAlerta(cfg.pin) : makeSvgPin(cfg.pin),
+        iconSize:   tieneAlerta ? [36, 46] : [32, 42],
+        iconAnchor: tieneAlerta ? [18, 46] : [16, 42],
+        popupAnchor:tieneAlerta ? [0, -48] : [0, -44],
       })
 
       const marker = L.marker([Number(c.latitud), Number(c.longitud)], { icon, title: c.nombre_razon_social })
@@ -183,6 +240,7 @@ export default function MapaPage() {
         <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
           <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:4px">${c.nombre_razon_social}</div>
           <div style="font-size:11px;color:#64748b;margin-bottom:8px">${c.documento_identidad || ''}</div>
+          ${tieneAlerta ? `<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:8px;border-radius:4px;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#dc2626">⚠️ CLIENTE CON ALERTA</span><div style="font-size:10px;color:#7f1d1d;margin-top:4px">${reportes.filter(r => r.cliente_id === c.id && r.estado === 'abierto').length} reporte(s) abierto(s)</div></div>` : ''}
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
             <span style="background:${cfg.bg};color:${cfg.txt};padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid ${cfg.ring}">${c.estado_servicio}</span>
             ${plan ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600">${plan.nombre_plan}</span>` : ''}
@@ -191,7 +249,7 @@ export default function MapaPage() {
           ${c.zona_sector ? `<div style="font-size:12px;color:#94a3b8">📍 ${c.zona_sector}</div>` : ''}
           ${c.direccion_ubicacion ? `<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic">${c.direccion_ubicacion}</div>` : ''}
         </div>
-      `, { maxWidth: 280 })
+      `, { maxWidth: 300 })
 
       marker.on('click', () => { setSelected(c); setSelectedType('cliente') })
       if (showMode === 'clientes') marker.addTo(mapObj.current)
@@ -228,10 +286,10 @@ export default function MapaPage() {
       markersRef.current.push(marker)
     })
 
-    // ─── SNACKS ────────────────
-    snacks.forEach(s => {
+    // ─── PUNTOS DE REFERENCIA ────────────────
+    puntosRef.forEach(s => {
       const iconAddr = L.icon({
-        iconUrl:    makeSvgSnack(ICON_TYPES.snack.color),
+        iconUrl:    makeSvgPuntoReferencia(ICON_TYPES.punto_ref.color),
         iconSize:   [32, 36],
         iconAnchor: [16, 36],
         popupAnchor:[0, -38],
@@ -253,8 +311,8 @@ export default function MapaPage() {
         </div>
       `, { maxWidth: 260 })
 
-      marker.on('click', () => { setSelected(s); setSelectedType('snack') })
-      if (showMode === 'snacks') marker.addTo(mapObj.current)
+      marker.on('click', () => { setSelected(s); setSelectedType('punto_ref') })
+      if (showMode === 'puntos_ref') marker.addTo(mapObj.current)
       markersRef.current.push(marker)
     })
 
@@ -264,7 +322,42 @@ export default function MapaPage() {
       const group = L.featureGroup(markersVisibles)
       mapObj.current.fitBounds(group.getBounds().pad(0.15))
     }
-  }, [clientes, antenas, snacks, planes, leafletReady, loading, showMode])
+  }, [clientes, antenas, puntosRef, planes, reportes, leafletReady, loading, showMode])
+
+  // ─── Renderizar polilínea del medidor ───────────────────────────
+  useEffect(() => {
+    if (!mapObj.current || !leafletReady || medidor.puntos.length < 1) return
+    const L = window.L
+    
+    // Limpiar polilínea anterior
+    if (medidor.polyline) medidor.polyline.remove()
+    
+    // Dibujar líneas entre puntos
+    if (medidor.puntos.length > 0) {
+      const polyline = L.polyline(medidor.puntos, {
+        color: '#525f71', // Primary Navy Sentinel
+        weight: 3,
+        opacity: 0.8,
+        dashArray: '5, 5',
+      }).addTo(mapObj.current)
+      
+      // Agregar markers pequeños en cada punto
+      medidor.puntos.forEach((punto, idx) => {
+        L.circleMarker(punto, {
+          radius: 5,
+          fillColor: '#525f71', // Primary Navy Sentinel
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8,
+          zIndexOffset: 500,
+        }).addTo(mapObj.current)
+          .bindPopup(`Punto ${idx + 1}`, { autoClose: false })
+      })
+      
+      setMedidor(p => ({...p, polyline}))
+    }
+  }, [medidor.puntos, leafletReady])
 
   // ─── Guardar coordenadas ───────────────────────────────────────
   async function guardarUbicacion() {
@@ -285,13 +378,13 @@ export default function MapaPage() {
           longitud: editCoord.lng,
         })
         await alertaExito('Antena reubicada', `${selected.nombre} movida correctamente`)
-      } else if (selectedType === 'snack') {
+      } else if (selectedType === 'punto_ref') {
         await api.patch('/api/snacks', {
           id: selected.id,
           latitud:  editCoord.lat,
           longitud: editCoord.lng,
         })
-        await alertaExito('Snack reubicado', `${selected.nombre} movido correctamente`)
+        await alertaExito('Punto reubicado', `${selected.nombre} movido correctamente`)
       }
       setEditCoord(null)
       setSelected(null)
@@ -308,9 +401,9 @@ export default function MapaPage() {
       if (selectedType === 'antena') {
         await api.delete(`/api/antenas?id=${selected.id}`)
         await alertaExito('Antena eliminada')
-      } else if (selectedType === 'snack') {
+      } else if (selectedType === 'punto_ref') {
         await api.delete(`/api/snacks?id=${selected.id}`)
-        await alertaExito('Snack eliminado')
+        await alertaExito('Punto de referencia eliminado')
       }
       setSelected(null)
       await cargar()
@@ -323,6 +416,57 @@ export default function MapaPage() {
     if (!mapObj.current || !c.latitud) return
     mapObj.current.flyTo([Number(c.latitud), Number(c.longitud)], 16, { duration: 1 })
     setSelected(c)
+  }
+
+  // ─── Crear nueva ANTENA ───────────────────────
+  async function crearAntena() {
+    if (!formData.nombre || formData.nombre.trim() === '') {
+      await alertaError('Error', 'El nombre es requerido')
+      return
+    }
+    setFormSaving(true)
+    try {
+      const res = await api.post('/api/antenas', {
+        nombre: formData.nombre,
+        latitud: formData.latitud || BAR_LAT,
+        longitud: formData.longitud || BAR_LNG,
+        ubicacion_descripcion: formData.ubicacion_descripcion || '',
+        banda_frecuencia: formData.banda_frecuencia || '',
+        potencia_watts: formData.potencia_watts || null,
+        alcance_approx_metros: formData.alcance_approx_metros || null,
+        nota_tecnica: formData.nota_tecnica || '',
+      })
+      await alertaExito('¡Listo!', 'Antena creada correctamente')
+      setModalForm(null)
+      setFormData({})
+      await cargar()
+    } catch(e) { await alertaError('Error', e.message) }
+    finally { setFormSaving(false) }
+  }
+
+  // ─── Crear nuevo PUNTO DE REFERENCIA ───────────────────────
+  async function crearPuntoRef() {
+    if (!formData.nombre || formData.nombre.trim() === '') {
+      await alertaError('Error', 'El nombre es requerido')
+      return
+    }
+    setFormSaving(true)
+    try {
+      const res = await api.post('/api/snacks', {
+        nombre: formData.nombre,
+        latitud: formData.latitud || BAR_LAT,
+        longitud: formData.longitud || BAR_LNG,
+        ubicacion_descripcion: formData.ubicacion_descripcion || '',
+        contacto_telefono: formData.contacto_telefono || '',
+        horario_atencion: formData.horario_atencion || '',
+        nota_especial: formData.nota_especial || '',
+      })
+      await alertaExito('¡Listo!', 'Punto de referencia creado correctamente')
+      setModalForm(null)
+      setFormData({})
+      await cargar()
+    } catch(e) { await alertaError('Error', e.message) }
+    finally { setFormSaving(false) }
   }
 
   const sinUbicacion  = clientes.filter(c => !c.latitud || !c.longitud)
@@ -360,7 +504,7 @@ export default function MapaPage() {
       <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16, height:'calc(100vh - 130px)', minHeight:500 }}>
 
         {/* ── Mapa ──────────────────────────────────────────────── */}
-        <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid #e2e8f0', boxShadow:'0 1px 8px rgba(0,0,0,0.07)' }}>
+        <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid var(--outline)', boxShadow:'0 1px 8px rgba(0,0,0,0.07)' }}>
           <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
 
           {/* Banner de edición/modo */}
@@ -378,16 +522,16 @@ export default function MapaPage() {
           <div style={{
             position:'absolute', top:14, left:12, zIndex:500,
             display:'flex', gap:6, flexDirection: 'row',
-            background:'rgba(255,255,255,0.96)', borderRadius:10,
+            background:'rgba(247,249,251,0.96)', borderRadius:10,
             padding:'6px', boxShadow:'0 2px 12px rgba(0,0,0,0.12)',
-            border:'1px solid #e2e8f0', backdropFilter:'blur(4px)',
+            border:'1px solid var(--outline)', backdropFilter:'blur(20px)',
           }}>
             <button 
               onClick={() => { setShowMode('clientes'); setSelected(null) }}
               style={{
-                padding:'6px 12px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'clientes' ? '#16a34a' : '#e2e8f0',
-                color: showMode === 'clientes' ? '#fff' : '#334155',
+                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
+                background: showMode === 'clientes' ? 'var(--tertiary)' : 'var(--surface-container-low)',
+                color: showMode === 'clientes' ? 'var(--on-tertiary)' : 'var(--on-surface)',
                 cursor: 'pointer', transition: 'all .2s'
               }}>
               👥 Clientes
@@ -395,22 +539,33 @@ export default function MapaPage() {
             <button 
               onClick={() => { setShowMode('antenas'); setSelected(null) }}
               style={{
-                padding:'6px 12px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'antenas' ? '#2563eb' : '#e2e8f0',
-                color: showMode === 'antenas' ? '#fff' : '#334155',
+                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
+                background: showMode === 'antenas' ? 'var(--primary)' : 'var(--surface-container-low)',
+                color: showMode === 'antenas' ? 'var(--on-primary)' : 'var(--on-surface)',
                 cursor: 'pointer', transition: 'all .2s'
               }}>
               📡 Antenas
             </button>
             <button 
-              onClick={() => { setShowMode('snacks'); setSelected(null) }}
+              onClick={() => { setShowMode('puntos_ref'); setSelected(null) }}
               style={{
-                padding:'6px 12px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
-                background: showMode === 'snacks' ? '#f59e0b' : '#e2e8f0',
-                color: showMode === 'snacks' ? '#fff' : '#334155',
+                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
+                background: showMode === 'puntos_ref' ? 'var(--secondary)' : 'var(--surface-container-low)',
+                color: showMode === 'puntos_ref' ? 'var(--on-secondary)' : 'var(--on-surface)',
                 cursor: 'pointer', transition: 'all .2s'
               }}>
-              🍔 Snacks
+              📍 Puntos
+            </button>
+            <div style={{ width:1, background:'var(--outline)', opacity:0.3 }}></div>
+            <button 
+              onClick={() => setMedidor(p => ({...p, activo: !p.activo}))}
+              style={{
+                padding:'8px 14px', fontSize:11, fontWeight:600, borderRadius:8, border: 'none',
+                background: medidor.activo ? 'var(--primary)' : 'var(--surface-container-low)',
+                color: medidor.activo ? 'var(--on-primary)' : 'var(--on-surface)',
+                cursor: 'pointer', transition: 'all .2s'
+              }}>
+              📏 Medir
             </button>
           </div>
 
@@ -444,15 +599,48 @@ export default function MapaPage() {
             )}
           </div>
 
+          {/* Panel MEDIDOR activo */}
+          {medidor.activo && (
+            <div style={{
+              position:'absolute', bottom:24, left:12, zIndex:500,
+              background:'rgba(82, 95, 113, 0.95)', borderRadius:14,
+              padding:'14px 16px', boxShadow:'0 4px 16px rgba(82, 95, 113, 0.3)',
+              border:'1px solid var(--outline)', backdropFilter:'blur(20px)', minWidth:300,
+              color:'var(--on-surface)',
+            }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--on-surface)', marginBottom:10 }}>📏 Medidor Activo</div>
+              <div style={{ fontSize:14, color:'var(--tertiary)', fontFamily:'IBM Plex Mono', fontWeight:700, marginBottom:6 }}>
+                {(medidor.distanciaTotal / 1000).toFixed(2)} km
+              </div>
+              <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginBottom:12 }}>
+                {medidor.distanciaTotal.toFixed(0)}m • {medidor.puntos.length} puntos
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => setMedidor(p => ({...p, puntos: [], distanciaTotal: 0, polyline: null}))}
+                  style={{ flex:1, padding:'8px 12px', fontSize:11, background:'var(--error-container)', color:'var(--on-error-container)', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, transition:'all 0.2s' }}>
+                  Limpiar
+                </button>
+                <button onClick={() => {
+                  const ruta = `${medidor.distanciaTotal.toFixed(0)}m (${medidor.puntos.length} puntos)`
+                  alertaExito('Medición guardada', ruta)
+                  setMedidor(p => ({...p, activo: false, puntos: [], distanciaTotal: 0}))
+                }}
+                  style={{ flex:1, padding:'8px 12px', fontSize:11, background:'var(--tertiary)', color:'var(--on-tertiary)', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, transition:'all 0.2s' }}>
+                  Finalizar
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Cargando overlay */}
           {!leafletReady && (
             <div style={{
               position:'absolute', inset:0, display:'flex', alignItems:'center',
-              justifyContent:'center', background:'#f6f8fa', zIndex:600,
+              justifyContent:'center', background:'var(--surface)', zIndex:600,
             }}>
               <div style={{ textAlign:'center' }}>
-                <div style={{ width:36, height:36, border:'3px solid #e2e8f0', borderTop:'3px solid #16a34a', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 16px' }} />
-                <div style={{ fontSize:14, color:'#64748b' }}>Cargando mapa…</div>
+                <div style={{ width:36, height:36, border:'3px solid var(--outline-variant)', borderTop:'3px solid var(--tertiary)', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 16px' }} />
+                <div style={{ fontSize:14, color:'var(--on-surface-variant)' }}>Cargando mapa…</div>
               </div>
             </div>
           )}
@@ -463,16 +651,16 @@ export default function MapaPage() {
 
           {/* Stats por estado (solo para clientes) */}
           {showMode === 'clientes' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Resumen</div>
+            <div style={{ background:'var(--surface-container-lowest)', border:'1px solid var(--outline)', borderRadius:14, padding:'14px 16px' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Resumen</div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
-                <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, padding:'10px 12px' }}>
-                  <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>En mapa</div>
-                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#16a34a', fontWeight:700 }}>{conUbicacion.length}</div>
+                <div style={{ background:'var(--tertiary-fixed)', border:'1px solid var(--tertiary)', borderRadius:10, padding:'10px 12px' }}>
+                  <div style={{ fontSize:10, color:'var(--on-tertiary-fixed)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>En mapa</div>
+                  <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:22, color:'var(--on-tertiary-fixed)', fontWeight:700 }}>{conUbicacion.length}</div>
                 </div>
-                <div style={{ background:'#fef9c3', border:'1px solid #fde68a', borderRadius:10, padding:'10px 12px' }}>
-                  <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>Sin ubicar</div>
-                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#d97706', fontWeight:700 }}>{sinUbicacion.length}</div>
+                <div style={{ background:'var(--primary-fixed)', border:'1px solid var(--primary)', borderRadius:10, padding:'10px 12px' }}>
+                  <div style={{ fontSize:10, color:'var(--on-primary-fixed)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>Sin ubicar</div>
+                  <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:22, color:'var(--on-primary-fixed)', fontWeight:700 }}>{sinUbicacion.length}</div>
                 </div>
               </div>
               {statsPorEstado.map(({ estado, cfg, total }) => (
@@ -489,22 +677,22 @@ export default function MapaPage() {
 
           {/* Stats para antenas */}
           {showMode === 'antenas' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Antenas</div>
-              <div style={{ fontSize:12, color:'#334155' }}>
-                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'JetBrains Mono', fontWeight:700, color:'#2563eb' }}>{antenas.length}</span></div>
-                <div style={{ fontSize:11, color:'#64748b' }}>Haz clic en una antena para ver detalles</div>
+            <div style={{ background:'var(--surface-container-lowest)', border:'1px solid var(--outline)', borderRadius:14, padding:'14px 16px' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Antenas</div>
+              <div style={{ fontSize:12, color:'var(--on-surface)' }}>
+                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'IBM Plex Mono', fontWeight:700, color:'var(--primary)' }}>{antenas.length}</span></div>
+                <div style={{ fontSize:11, color:'var(--on-surface-variant)' }}>Haz clic en una antena para ver detalles</div>
               </div>
             </div>
           )}
 
-          {/* Stats para snacks */}
-          {showMode === 'snacks' && (
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Snacks</div>
-              <div style={{ fontSize:12, color:'#334155' }}>
-                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'JetBrains Mono', fontWeight:700, color:'#f59e0b' }}>{snacks.length}</span></div>
-                <div style={{ fontSize:11, color:'#64748b' }}>Haz clic en un snack para ver detalles</div>
+          {/* Stats para puntos de referencia */}
+          {showMode === 'puntos_ref' && (
+            <div style={{ background:'var(--surface-container-lowest)', border:'1px solid var(--outline)', borderRadius:14, padding:'14px 16px' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Puntos de Referencia</div>
+              <div style={{ fontSize:12, color:'var(--on-surface)' }}>
+                <div style={{ fontWeight:600, marginBottom:4 }}>Total en mapa: <span style={{ fontFamily:'IBM Plex Mono', fontWeight:700, color:'var(--secondary)' }}>{puntosRef.length}</span></div>
+                <div style={{ fontSize:11, color:'var(--on-surface-variant)' }}>Haz clic en un punto para ver detalles</div>
               </div>
             </div>
           )}
@@ -512,46 +700,46 @@ export default function MapaPage() {
           {/* Panel elemento seleccionado */}
           {selected && (
             <div style={{ 
-              background: selectedType === 'cliente' ? '#f0fdf4' : selectedType === 'antena' ? '#eff6ff' : '#fef7ec', 
-              border: selectedType === 'cliente' ? '1px solid #bbf7d0' : selectedType === 'antena' ? '1px solid #bfdbfe' : '1px solid #fedba8', 
-              borderRadius:12, padding:14, flexShrink:0 
+              background: selectedType === 'cliente' ? 'var(--tertiary-container)' : selectedType === 'antena' ? 'var(--primary-container)' : 'var(--surface-container-lowest)', 
+              border: selectedType === 'cliente' ? '1px solid var(--tertiary)' : selectedType === 'antena' ? '1px solid var(--primary)' : '1px solid var(--outline)', 
+              borderRadius:14, padding:16, flexShrink:0 
             }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#0f172a', lineHeight:1.3 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--on-surface)', lineHeight:1.3 }}>
                   {selectedType === 'cliente' ? selected.nombre_razon_social : selected.nombre}
                 </div>
                 <button onClick={() => { setSelected(null); setEditCoord(null) }}
-                  style={{ background:'none', border:'none', cursor:'pointer', color:'#94a3b8', fontSize:16, lineHeight:1, padding:0 }}>✕</button>
+                  style={{ background:'none', border:'none', cursor:'pointer', color:'var(--on-surface-variant)', fontSize:18, lineHeight:1, padding:0, width:24, height:24, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
               </div>
               
               {selectedType === 'cliente' && (
                 <>
-                  <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>
+                  <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginBottom:10 }}>
                     {selected.documento_identidad && <span>{selected.documento_identidad} · </span>}
-                    <span style={{ color: ESTADO_COLOR[selected.estado_servicio]?.txt || '#64748b', fontWeight:600 }}>{selected.estado_servicio}</span>
+                    <span style={{ color: ESTADO_COLOR[selected.estado_servicio]?.txt || 'var(--on-surface-variant)', fontWeight:600 }}>{selected.estado_servicio}</span>
                   </div>
                   {editCoord ? (
                     <div>
-                      <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#16a34a', marginBottom:10, background:'#fff', borderRadius:8, padding:'6px 10px', border:'1px solid #bbf7d0' }}>
+                      <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:11, color:'var(--tertiary)', marginBottom:10, background:'var(--surface-container-lowest)', borderRadius:8, padding:'8px 12px', border:'1px solid var(--tertiary)' }}>
                         Lat: {editCoord.lat.toFixed(6)}<br/>
                         Lon: {editCoord.lng.toFixed(6)}
                       </div>
-                      <div style={{ display:'flex', gap:6 }}>
+                      <div style={{ display:'flex', gap:8 }}>
                         <button className="btn btn-primary btn-sm" onClick={guardarUbicacion} disabled={saving} style={{ fontSize:11, flex:1 }}>
                           {saving ? 'Guardando…' : '💾 Guardar'}
                         </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)} style={{ fontSize:11, flex:1 }}>Cancelar</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => setEditCoord(null)} style={{ fontSize:11, flex:1 }}>Cancelar</button>
                       </div>
                     </div>
                   ) : (
                     <div>
                       {selected.latitud && (
-                        <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'#64748b', marginBottom:8 }}>
+                        <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:10, color:'var(--on-surface-variant)', marginBottom:8 }}>
                           {Number(selected.latitud).toFixed(5)}, {Number(selected.longitud).toFixed(5)}
                         </div>
                       )}
                       {canWrite && (
-                        <button className="btn btn-ghost btn-sm" style={{ width:'100%', justifyContent:'center', fontSize:11 }}
+                        <button className="btn btn-secondary btn-sm" style={{ width:'100%', justifyContent:'center', fontSize:11 }}
                           onClick={() => setEditCoord(selected.latitud ? { lat: Number(selected.latitud), lng: Number(selected.longitud) } : null)}>
                           📍 {selected.latitud ? 'Mover pin' : 'Ubicar'}
                         </button>
@@ -619,65 +807,224 @@ export default function MapaPage() {
 
           {/* Lista sin ubicación (solo clientes) */}
           {showMode === 'clientes' && (
-          <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
-            <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Sin ubicar</div>
-                <span style={{ fontSize:11, color:'#d97706', fontWeight:700, fontFamily:'JetBrains Mono,monospace' }}>{sinUbicacion.length}</span>
-              </div>
-              <div style={{ display:'flex', gap:6, flexDirection:'column' }}>
-                <input className="input" style={{ fontSize:12, padding:'7px 10px' }} placeholder="Buscar…"
-                  value={busqueda} onChange={e => setBusqueda(e.target.value)} />
-                <select className="select" style={{ fontSize:12, padding:'7px 10px' }}
-                  value={filtro} onChange={e => setFiltro(e.target.value)}>
-                  <option value="">Todos los estados</option>
-                  {Object.keys(ESTADO_COLOR).map(e => <option key={e}>{e}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{ overflowY:'auto', flex:1 }}>
-              {loading ? (
-                <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>Cargando…</div>
-              ) : filtradosSin.length === 0 ? (
-                <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>
-                  {sinUbicacion.length === 0 ? '✓ Todos los clientes están en el mapa' : 'Sin resultados'}
-                </div>
-              ) : filtradosSin.map(c => {
-                const cfg = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
-                return (
-                  <div key={c.id}
-                    style={{
-                      padding:'10px 14px', borderBottom:'1px solid #f8fafc',
-                      cursor: canWrite ? 'pointer' : 'default',
-                      background: selected?.id === c.id ? '#f0fdf4' : 'transparent',
-                      transition:'background .15s',
-                    }}
-                    onClick={() => { if (canWrite) { setSelected(c); setEditCoord(null) } }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
-                      <div style={{ fontSize:12, fontWeight:600, color:'#0f172a', lineHeight:1.3 }}>{c.nombre_razon_social}</div>
-                      <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:10, background:cfg.bg, color:cfg.txt, flexShrink:0 }}>
-                        {c.estado_servicio}
-                      </span>
-                    </div>
-                    <div style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>{c.zona_sector || 'Sin zona'}</div>
-                    {canWrite && selected?.id === c.id && !editCoord && (
-                      <div style={{ fontSize:11, color:'#16a34a', marginTop:4, fontWeight:600 }}>
-                        → Haz clic en el mapa para fijar ubicación
-                      </div>
-                    )}
+            <>
+              <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+                <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Sin ubicar</div>
+                    <span style={{ fontSize:11, color:'#d97706', fontWeight:700, fontFamily:'JetBrains Mono,monospace' }}>{sinUbicacion.length}</span>
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                  <div style={{ display:'flex', gap:6, flexDirection:'column' }}>
+                    <input className="input" style={{ fontSize:12, padding:'7px 10px' }} placeholder="Buscar…"
+                      value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+                    <select className="select" style={{ fontSize:12, padding:'7px 10px' }}
+                      value={filtro} onChange={e => setFiltro(e.target.value)}>
+                      <option value="">Todos los estados</option>
+                      {Object.keys(ESTADO_COLOR).map(e => <option key={e}>{e}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ overflowY:'auto', flex:1 }}>
+                  {loading ? (
+                    <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>Cargando…</div>
+                  ) : filtradosSin.length === 0 ? (
+                    <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>
+                      {sinUbicacion.length === 0 ? '✓ Todos los clientes están en el mapa' : 'Sin resultados'}
+                    </div>
+                  ) : filtradosSin.map(c => {
+                    const cfg = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
+                    return (
+                      <div key={c.id}
+                        style={{
+                          padding:'10px 14px', borderBottom:'1px solid #f8fafc',
+                          cursor: canWrite ? 'pointer' : 'default',
+                          background: selected?.id === c.id ? '#f0fdf4' : 'transparent',
+                          transition:'background .15s',
+                        }}
+                        onClick={() => { if (canWrite) { setSelected(c); setEditCoord(null) } }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
+                          <div style={{ fontSize:12, fontWeight:600, color:'#0f172a', lineHeight:1.3 }}>{c.nombre_razon_social}</div>
+                          <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:10, background:cfg.bg, color:cfg.txt, flexShrink:0 }}>
+                            {c.estado_servicio}
+                          </span>
+                        </div>
+                        <div style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>{c.zona_sector || 'Sin zona'}</div>
+                        {canWrite && selected?.id === c.id && !editCoord && (
+                          <div style={{ fontSize:11, color:'#16a34a', marginTop:4, fontWeight:600 }}>
+                            → Haz clic en el mapa para fijar ubicación
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
 
-          {/* Botón centrar en Barquisimeto */}
-          <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }}
-            onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
-            🏙️ Centrar en Barquisimeto
-          </button>
+              {/* Botón centrar en Barquisimeto */}
+              <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }}
+                onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
+                🏙️ Centrar en Barquisimeto
+              </button>
+            </>
+          )}
+
+          {/* Panel ANTENAS */}
+          {showMode === 'antenas' && (
+            <>
+              <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+                <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Antenas</div>
+                    <span style={{ fontSize:11, color:'#2563eb', fontWeight:700, fontFamily:'JetBrains Mono' }}>{antenas.length}</span>
+                  </div>
+                  <button onClick={() => setModalForm('nueva_antena')} style={{ width:'100%', padding:'8px 12px', fontSize:11, fontWeight:600, background:'#2563eb', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
+                    ➕ Agregar Antena
+                  </button>
+                </div>
+                <div style={{ overflowY:'auto', flex:1 }}>
+                  {antenas.map(a => (
+                    <div key={a.id} style={{ padding:'10px 14px', borderBottom:'1px solid #f8fafc', cursor:'pointer', background:selected?.id === a.id ? '#eff6ff' : 'transparent' }} onClick={() => setSelected(a)}>
+                      <div style={{ fontSize:12, fontWeight:600, color:'#0f172a' }}>{a.nombre}</div>
+                      <div style={{ fontSize:11, color:'#64748b', marginTop:2 }}>{a.banda_frecuencia || 'Sin banda'}</div>
+                      {canWrite && selected?.id === a.id && (
+                        <div style={{ display:'flex', gap:6, marginTop:6 }}>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize:10, flex:1 }} onClick={() => setEditCoord({ lat: Number(a.latitud), lng: Number(a.longitud) })}>
+                            📍 Mover
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize:10, flex:1, color:'#dc2626' }} onClick={eliminarUbicacion} disabled={saving}>
+                            🗑️ Del
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }} onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
+                🏙️ Centrar en Barquisimeto
+              </button>
+            </>
+          )}
+
+          {/* Panel PUNTOS DE REFERENCIA */}
+          {showMode === 'puntos_ref' && (
+            <>
+              <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+                <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Puntos de Referencia</div>
+                    <span style={{ fontSize:11, color:'#f59e0b', fontWeight:700, fontFamily:'JetBrains Mono' }}>{puntosRef.length}</span>
+                  </div>
+                  <button onClick={() => setModalForm('nuevo_punto_ref')} style={{ width:'100%', padding:'8px 12px', fontSize:11, fontWeight:600, background:'#f59e0b', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
+                    ➕ Agregar Punto
+                  </button>
+                </div>
+                <div style={{ overflowY:'auto', flex:1 }}>
+                  {puntosRef.map(p => (
+                    <div key={p.id} style={{ padding:'10px 14px', borderBottom:'1px solid #f8fafc', cursor:'pointer', background:selected?.id === p.id ? '#fef3c7' : 'transparent' }} onClick={() => setSelected(p)}>
+                      <div style={{ fontSize:12, fontWeight:600, color:'#0f172a' }}>{p.nombre}</div>
+                      <div style={{ fontSize:11, color:'#64748b', marginTop:2 }}>{p.ubicacion_descripcion || 'Sin descripción'}</div>
+                      {canWrite && selected?.id === p.id && (
+                        <div style={{ display:'flex', gap:6, marginTop:6 }}>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize:10, flex:1 }} onClick={() => setEditCoord({ lat: Number(p.latitud), lng: Number(p.longitud) })}>
+                            📍 Mover
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize:10, flex:1, color:'#dc2626' }} onClick={eliminarUbicacion} disabled={saving}>
+                            🗑️ Del
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }} onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
+                🏙️ Centrar en Barquisimeto
+              </button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* MODAL: Nueva Antena */}
+      {modalForm === 'nueva_antena' && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:24, maxWidth:420, width:'90%', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 20px 64px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize:18, fontWeight:700, color:'#0f172a', marginBottom:4 }}>➕ Nueva Antena</h2>
+            <p style={{ fontSize:13, color:'#64748b', marginBottom:16 }}>Completa los datos de la antena</p>
+
+            {/* Nombre */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Nombre *</label>
+              <input type="text" className="input" placeholder="Ej: Antena Oeste" value={formData.nombre || ''} onChange={e => setFormData(p => ({...p, nombre: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Descripción */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Descripción / Ubicación</label>
+              <textarea className="input" placeholder="Ej: Zona Industrial, cerca del río" value={formData.ubicacion_descripcion || ''} onChange={e => setFormData(p => ({...p, ubicacion_descripcion: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12, minHeight:70, fontFamily:'inherit' }}/>
+            </div>
+
+            {/* Banda */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Banda / Frecuencia</label>
+              <input type="text" className="input" placeholder="Ej: 2.4GHz" value={formData.banda_frecuencia || ''} onChange={e => setFormData(p => ({...p, banda_frecuencia: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Alcance */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Alcance aprox. (metros)</label>
+              <input type="number" className="input" placeholder="Ej: 500" value={formData.alcance_approx_metros || ''} onChange={e => setFormData(p => ({...p, alcance_approx_metros: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Botones */}
+            <div style={{ display:'flex', gap:8, marginTop:20 }}>
+              <button onClick={() => { setModalForm(null); setFormData({}); }} className="btn btn-ghost" style={{ flex:1, padding:'8px 12px', fontSize:12 }}>Cancelar</button>
+              <button onClick={crearAntena} disabled={formSaving} className="btn" style={{ flex:1, padding:'8px 12px', fontSize:12, background:'#2563eb', color:'#fff', border:'none', borderRadius:8, cursor:formSaving ? 'not-allowed' : 'pointer', opacity:formSaving ? 0.6 : 1 }}>{formSaving ? 'Guardando...' : 'Crear'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Nuevo Punto de Referencia */}
+      {modalForm === 'nuevo_punto_ref' && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:24, maxWidth:420, width:'90%', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 20px 64px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize:18, fontWeight:700, color:'#0f172a', marginBottom:4 }}>📍 Nuevo Punto de Referencia</h2>
+            <p style={{ fontSize:13, color:'#64748b', marginBottom:16 }}>Agrega un lugar importante en el mapa</p>
+
+            {/* Nombre */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Nombre *</label>
+              <input type="text" className="input" placeholder="Ej: Centro Comercial Plaza Mayor" value={formData.nombre || ''} onChange={e => setFormData(p => ({...p, nombre: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Descripción */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Descripción</label>
+              <textarea className="input" placeholder="Ej: Centro comercial con estacionamiento, horario 10am-8pm" value={formData.ubicacion_descripcion || ''} onChange={e => setFormData(p => ({...p, ubicacion_descripcion: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12, minHeight:70, fontFamily:'inherit' }}/>
+            </div>
+
+            {/* Teléfono */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Teléfono</label>
+              <input type="text" className="input" placeholder="0251-123-4567" value={formData.contacto_telefono || ''} onChange={e => setFormData(p => ({...p, contacto_telefono: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Horario */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#334155', marginBottom:4 }}>Horario</label>
+              <input type="text" className="input" placeholder="Lun-Dom 10am-8pm" value={formData.horario_atencion || ''} onChange={e => setFormData(p => ({...p, horario_atencion: e.target.value}))} style={{ width:'100%', padding:'8px 10px', fontSize:12 }}/>
+            </div>
+
+            {/* Botones */}
+            <div style={{ display:'flex', gap:8, marginTop:20 }}>
+              <button onClick={() => { setModalForm(null); setFormData({}); }} className="btn btn-ghost" style={{ flex:1, padding:'8px 12px', fontSize:12 }}>Cancelar</button>
+              <button onClick={crearPuntoRef} disabled={formSaving} className="btn" style={{ flex:1, padding:'8px 12px', fontSize:12, background:'#f59e0b', color:'#fff', border:'none', borderRadius:8, cursor:formSaving ? 'not-allowed' : 'pointer', opacity:formSaving ? 0.6 : 1 }}>{formSaving ? 'Guardando...' : 'Crear'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

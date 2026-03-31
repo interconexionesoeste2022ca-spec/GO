@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Architectural Ledger | Transaction Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, .display-lg {
+            font-family: 'Manrope', sans-serif;
+        }
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d9e4ea; border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-container": "#e8eff3",
+                "on-tertiary-container": "#005a3d",
+                "on-error-container": "#752121",
+                "on-primary-container": "#455364",
+                "tertiary": "#006d4b",
+                "surface-container-low": "#f0f4f7",
+                "secondary": "#526074",
+                "error-container": "#fe8983",
+                "surface-dim": "#cfdce3",
+                "on-tertiary-fixed": "#00452e",
+                "inverse-on-surface": "#9a9d9f",
+                "on-primary-fixed-variant": "#4f5d6e",
+                "surface-bright": "#f7f9fb",
+                "on-error": "#fff7f6",
+                "primary-container": "#d6e4f9",
+                "secondary-dim": "#465468",
+                "outline-variant": "#a9b4b9",
+                "tertiary-fixed": "#7ff3be",
+                "error-dim": "#4e0309",
+                "primary-dim": "#465365",
+                "tertiary-fixed-dim": "#71e4b1",
+                "background": "#f7f9fb",
+                "on-background": "#2a3439",
+                "outline": "#717c82",
+                "on-tertiary": "#e6ffef",
+                "inverse-primary": "#d8e6fc",
+                "surface": "#f7f9fb",
+                "primary": "#525f71",
+                "error": "#9f403d",
+                "surface-tint": "#525f71",
+                "on-secondary-container": "#455367",
+                "secondary-fixed": "#d5e3fc",
+                "surface-variant": "#d9e4ea",
+                "on-surface-variant": "#566166",
+                "surface-container-highest": "#d9e4ea",
+                "on-surface": "#2a3439",
+                "tertiary-container": "#7ff3be",
+                "on-secondary-fixed-variant": "#4e5c71",
+                "secondary-container": "#d5e3fc",
+                "on-tertiary-fixed-variant": "#006545",
+                "on-primary-fixed": "#334051",
+                "on-secondary-fixed": "#324053",
+                "inverse-surface": "#0b0f10",
+                "on-secondary": "#f8f8ff",
+                "tertiary-dim": "#005f41",
+                "primary-fixed-dim": "#c8d5ea",
+                "surface-container-high": "#e1e9ee"
+              },
+              fontFamily: {
+                "headline": ["Manrope"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex">
+<!-- SideNavBar (The Anchor) -->
+<aside class="fixed left-0 top-0 flex flex-col items-center py-8 gap-6 bg-[#2a3439] dark:bg-[#0b0f10] backdrop-blur-xl h-screen w-20 hover:w-64 transition-all duration-500 ease-in-out z-50 overflow-hidden shadow-[8px_0_24px_rgba(11,15,16,0.05)] group">
+<div class="flex items-center gap-4 px-6 w-full mb-8">
+<div class="w-8 h-8 rounded bg-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+<p class="font-bold text-emerald-500 leading-none">Sentinel</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-widest">Management</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 w-full px-4 grow">
+<!-- Dashboard -->
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Dashboard</span>
+</a>
+<!-- Portfolio -->
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Portfolio</span>
+</a>
+<!-- Reports -->
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Reports</span>
+</a>
+<!-- Ledger (Active) -->
+<a class="bg-[#006d4b] text-white rounded-xl shadow-lg shadow-[#006d4b]/20 flex items-center justify-start gap-4 p-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Ledger</span>
+</a>
+<!-- Assets -->
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Compliance</span>
+</a>
+</nav>
+<div class="w-full px-4 flex flex-col gap-2">
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Support</span>
+</a>
+<a class="text-slate-400 hover:text-white flex items-center justify-start gap-4 p-3 hover:bg-white/10 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="opacity-0 group-hover:opacity-100 text-[11px] uppercase tracking-[0.08em] font-medium transition-opacity">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-20 transition-all duration-500 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#f7f9fb]/80 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center w-full px-12 py-6">
+<div class="flex items-center gap-12">
+<h1 class="text-xl font-bold tracking-tighter text-[#2a3439]">Architectural Ledger</h1>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#525f71] dark:text-[#a9b4b9] hover:text-[#2a3439] transition-colors text-sm font-medium tracking-wide" href="#">Analytics</a>
+<a class="text-[#525f71] dark:text-[#a9b4b9] hover:text-[#2a3439] transition-colors text-sm font-medium tracking-wide" href="#">Strategy</a>
+<a class="text-[#006d4b] font-semibold border-b-2 border-[#006d4b] pb-1 text-sm tracking-wide" href="#">Ledger</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:bg-[#f0f4f7]/50 p-2 rounded-full transition-all">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-tertiary rounded-full ring-2 ring-background"></span>
+</div>
+<div class="flex items-center gap-3 pl-6 border-l border-outline-variant/20">
+<div class="text-right">
+<p class="text-xs font-bold text-on-background">Elena Rodriguez</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Executive Director</p>
+</div>
+<img alt="Executive Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-surface-container" data-alt="professional portrait of a high-level female executive with confident expression, neutral studio background, soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBob-7OjhVIdsSZBNMxwWzORgZoM933sd8O2Hj-ZJDkm_0i4i-bS3qUo0BHjPi6tOGlgAHQDUoNg768aPOaevZ1FmDheaf_GfVLI2DzNOEmjwOqftduNiFqRrRSncajVxG5J0O1K6qKNXwABWFVh-0o_SQmxuDBXW3Cz2A7eSfBzir1bxPdBOQwcev1ykvmZ_C_uGjnXqaQw4DU-XIaVjHzTNmWhgfIXnbR_mjhTalpRKjuRrXjs6wRCLONgNmX9Gx-eg3ZrS2ysln8"/>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="flex-1 px-12 py-10 max-w-[1600px] mx-auto w-full">
+<!-- Hero Header Section -->
+<div class="flex justify-between items-end mb-16">
+<div class="max-w-2xl">
+<p class="text-tertiary text-xs font-bold uppercase tracking-[0.2em] mb-3">Institutional Flow</p>
+<h2 class="display-lg text-on-background text-5xl font-extrabold tracking-tight mb-4">Transaction Ledger</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed font-body max-w-lg">
+                        Real-time oversight of capital movement across cross-border accounts and strategic reserves.
+                    </p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 bg-surface-container-low text-primary font-semibold rounded-xl hover:bg-surface-container transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">filter_list</span>
+                        Refine View
+                    </button>
+<button class="px-8 py-3 bg-tertiary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-tertiary/20 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                        New Entry
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Main Ledger View -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Performance Plane -->
+<div class="bg-surface-container-low p-8 rounded-full border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-10">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Total Liquidity</p>
+<p class="text-2xl font-bold font-headline">$4,289,102.00</p>
+</div>
+<div class="w-px h-10 bg-outline-variant/20"></div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Pending Clearance</p>
+<p class="text-2xl font-bold font-headline text-secondary">$142,500.50</p>
+</div>
+</div>
+<div class="bg-tertiary/10 px-4 py-2 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm">trending_up</span>
+<span class="text-tertiary font-bold text-xs">+12.4% Institutional Growth</span>
+</div>
+</div>
+<!-- The Custom Table -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-5 text-[11px] uppercase tracking-[0.1em] font-bold text-on-surface-variant">Reference ID</th>
+<th class="px-8 py-5 text-[11px] uppercase tracking-[0.1em] font-bold text-on-surface-variant">Counterparty</th>
+<th class="px-8 py-5 text-[11px] uppercase tracking-[0.1em] font-bold text-on-surface-variant">Status</th>
+<th class="px-8 py-5 text-[11px] uppercase tracking-[0.1em] font-bold text-on-surface-variant text-right">Amount</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<p class="font-mono text-xs font-semibold text-primary">#TXN-90210-AX</p>
+<p class="text-[10px] text-on-surface-variant mt-1">OCT 24, 2023 • 14:32</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-xs text-primary">GS</div>
+<div>
+<p class="text-sm font-bold text-on-background">Goldman Sachs Asset Mgmt</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tight">Structured Equity</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">Cleared</span>
+</td>
+<td class="px-8 py-6 text-right">
+<p class="text-sm font-extrabold text-on-background">$1,250,000.00</p>
+<p class="text-[10px] text-tertiary mt-1">USD • WIRE</p>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<p class="font-mono text-xs font-semibold text-primary">#TXN-88124-KL</p>
+<p class="text-[10px] text-on-surface-variant mt-1">OCT 23, 2023 • 09:15</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-xs text-primary">JP</div>
+<div>
+<p class="text-sm font-bold text-on-background">JP Morgan Chase</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tight">Treasury Operations</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 rounded-full bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-wider">Processing</span>
+</td>
+<td class="px-8 py-6 text-right">
+<p class="text-sm font-extrabold text-on-background">$45,200.00</p>
+<p class="text-[10px] text-on-surface-variant mt-1">USD • ACH</p>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<p class="font-mono text-xs font-semibold text-primary">#TXN-76543-QW</p>
+<p class="text-[10px] text-on-surface-variant mt-1">OCT 22, 2023 • 16:45</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-xs text-primary">BN</div>
+<div>
+<p class="text-sm font-bold text-on-background">BNP Paribas</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tight">Venture Capital Fund</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">Cleared</span>
+</td>
+<td class="px-8 py-6 text-right">
+<p class="text-sm font-extrabold text-on-background">$820,000.00</p>
+<p class="text-[10px] text-tertiary mt-1">EUR • SEPA</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-6 bg-surface-container-low flex justify-center">
+<button class="text-xs font-bold text-primary uppercase tracking-[0.2em] hover:text-on-background transition-colors">Load Archive Entries</button>
+</div>
+</div>
+</div>
+<!-- Strategic Management Panel -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Custom Payment Input Section -->
+<div class="bg-surface-container-high p-8 rounded-3xl space-y-8">
+<div>
+<h3 class="text-lg font-bold font-headline mb-2">Initiate Transfer</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">Secure protocol for institutional capital reallocation.</p>
+</div>
+<div class="space-y-6">
+<!-- Custom Designed Inputs -->
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant ml-1">Destination IBAN / Reference</label>
+<div class="relative group">
+<input class="w-full bg-white border-0 focus:ring-2 focus:ring-tertiary rounded-xl px-5 py-4 text-sm font-mono placeholder:text-outline transition-all" placeholder="GBXX XXXX XXXX XXXX XXXX" type="text"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant">shield_locked</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant ml-1">Allocated Capital</label>
+<div class="relative">
+<input class="w-full bg-white border-0 focus:ring-2 focus:ring-tertiary rounded-xl px-5 py-4 text-xl font-bold font-headline placeholder:text-outline transition-all" placeholder="0.00" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-primary text-sm">USD</span>
+</div>
+</div>
+<!-- High-End Upload Area -->
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant ml-1">Verification Documents</label>
+<div class="border-2 border-dashed border-outline-variant/30 rounded-2xl p-8 flex flex-col items-center justify-center bg-white/40 hover:bg-white/80 transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">upload_file</span>
+</div>
+<p class="text-xs font-bold text-on-background">Drop Ledger Statement</p>
+<p class="text-[10px] text-on-surface-variant mt-1">PDF, XML, or XLS up to 25MB</p>
+</div>
+</div>
+<button class="w-full py-5 bg-on-background text-white font-bold rounded-xl hover:bg-black transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-emerald-400" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                                Execute Institutional Transfer
+                            </button>
+</div>
+</div>
+<!-- Market Context Card -->
+<div class="relative overflow-hidden rounded-3xl aspect-[4/3] group">
+<img alt="Architecture Background" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="abstract architectural close-up of glass and steel skyscraper reflecting high-contrast blue sky, brutalist elegance, sharp lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEwyifMDIC_4z7caShYw5ZKCS50-PXBtpzdtL-_q-xJrnhRz-6BcyTC0vLMvrapOW0U982Jev0nLFd6ZrOHks6MNpQT1HGLn3Y_8IiO-dOYEOW-sDSyAbCkXOHQHcIN5rDxGSJDgH_kfg01YAqvcGNYBv_CDNKzs1sTkbPS4r6T__1tkNnwj99Nug0ny_SbwFun1EDJZlANYfg6PykI5_teJb-5sdKrcNnwz8XRim5xSdz9oid8ZOvx677fzEIrcIVmmnnaA1RJ1yp"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-8 flex flex-col justify-end">
+<h4 class="text-white font-headline text-xl font-bold mb-2">Global Market Insight</h4>
+<p class="text-white/70 text-xs leading-relaxed mb-6">Real-time analysis of central bank interest rate projections for Q4 strategy.</p>
+<a class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 group/link" href="#">
+                                Read Whitepaper
+                                <span class="material-symbols-outlined text-sm group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Tonal Seam -->
+<footer class="px-12 py-8 bg-surface-container-low border-t border-outline-variant/5">
+<div class="flex justify-between items-center opacity-60">
+<p class="text-[10px] font-medium tracking-widest uppercase">© 2023 Architectural Ledger • Confidential System</p>
+<div class="flex gap-8">
+<a class="text-[10px] font-bold uppercase tracking-widest hover:text-on-background" href="#">System Health</a>
+<a class="text-[10px] font-bold uppercase tracking-widest hover:text-on-background" href="#">Privacy Protocol</a>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

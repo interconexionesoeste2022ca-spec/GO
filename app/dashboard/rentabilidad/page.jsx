@@ -69,7 +69,7 @@ export default function RentabilidadPage() {
 
   if (loading) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:300}}>
-      <div style={{width:24,height:24,border:'2px solid #e2e8f0',borderTop:'2px solid #16a34a',borderRadius:'50%',animation:'spin .7s linear infinite'}}/>
+      <div style={{width:24,height:24,border:'2px solid var(--outline)',borderTop:'2px solid var(--tertiary)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/>
     </div>
   )
 
@@ -82,7 +82,7 @@ export default function RentabilidadPage() {
           {MESES.map(m=><option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
         <div style={{flex:1}}/>
-        <span style={{fontSize:12,color:'#94a3b8',fontFamily:'JetBrains Mono,monospace'}}>
+        <span style={{fontSize:12,color:'var(--on-surface-variant)',fontFamily:'IBM Plex Mono,monospace'}}>
           {pagosConAnalisis.length} pagos con datos de tasa
         </span>
         <button className="btn btn-ghost btn-sm" onClick={cargar}>↺</button>
@@ -92,7 +92,7 @@ export default function RentabilidadPage() {
       <div className="kpi-grid" style={{marginBottom:24}}>
         <div className="kpi-card">
           <div className="kpi-label">Bs Recibidos</div>
-          <div className="kpi-val" style={{color:'#16a34a',fontSize:22}}>Bs. {formatUSD(totalBsRecibido)}</div>
+          <div className="kpi-val" style={{color:'var(--tertiary)',fontSize:22}}>Bs. {formatUSD(totalBsRecibido)}</div>
           <div className="kpi-sub">Total bolívares cobrados</div>
         </div>
         <div className="kpi-card">
@@ -102,16 +102,16 @@ export default function RentabilidadPage() {
         </div>
         <div className="kpi-card" style={{borderColor: neto >= 0 ? '#bbf7d0' : '#fecaca'}}>
           <div className="kpi-label">Diferencial neto</div>
-          <div className="kpi-val" style={{color: neto >= 0 ? '#16a34a' : '#dc2626', fontSize:22}}>
+          <div className="kpi-val" style={{color: neto >= 0 ? 'var(--tertiary)' : 'var(--error)', fontSize:22}}>
             {neto >= 0 ? '+' : ''}Bs. {formatUSD(neto)}
           </div>
-          <div className="kpi-sub" style={{color: neto >= 0 ? '#16a34a' : '#dc2626'}}>
+          <div className="kpi-sub" style={{color: neto >= 0 ? 'var(--tertiary)' : 'var(--error)'}}>
             {neto >= 0 ? '✓ Ganancia por tasa' : '⚠ Pérdida por tasa'}
           </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">Ganancia por tasa</div>
-          <div className="kpi-val" style={{color:'#16a34a',fontSize:22}}>+Bs. {formatUSD(totalGanancia)}</div>
+          <div className="kpi-val" style={{color:'var(--tertiary)',fontSize:22}}>+Bs. {formatUSD(totalGanancia)}</div>
           <div className="kpi-sub">Cuando tasa subió entre facturación y pago</div>
         </div>
         <div className="kpi-card">
@@ -131,8 +131,8 @@ export default function RentabilidadPage() {
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                   <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>{mesLabel(mes)}</div>
                   <div style={{
-                    fontFamily:'JetBrains Mono,monospace', fontSize:12, fontWeight:700,
-                    color: m.neto >= 0 ? '#16a34a' : '#dc2626',
+                    fontFamily:'IBM Plex Mono,monospace', fontSize:12, fontWeight:700,
+                    color: m.neto >= 0 ? 'var(--tertiary)' : 'var(--error)',
                   }}>
                     {m.neto >= 0 ? '+' : ''}Bs. {formatUSD(m.neto)} ({m.pagos} pagos)
                   </div>
@@ -174,7 +174,7 @@ export default function RentabilidadPage() {
           <div className="empty">
             <div style={{marginBottom:8,fontSize:20}}>📊</div>
             Sin pagos con datos de tasa para analizar.<br/>
-            <span style={{fontSize:12,color:'#94a3b8'}}>Los pagos en divisas (Zelle, Binance, Efectivo $) no aplican tasa BCV.</span>
+            <span style={{fontSize:12,color:'var(--on-surface-variant)'}}>Los pagos en divisas (Zelle, Binance, Efectivo $) no aplican tasa BCV.</span>
           </div>
         ) : (
           <div style={{overflowX:'auto'}}>
@@ -202,7 +202,7 @@ export default function RentabilidadPage() {
                     <td className="mono" style={{fontWeight:600}}>${formatUSD(p.montoUSD)}</td>
                     <td className="mono" style={{fontSize:12}}>{p.tasaFact.toFixed(2)}</td>
                     <td className="mono" style={{fontSize:12,fontWeight:600,
-                      color: p.tasaPago > p.tasaFact ? '#16a34a' : p.tasaPago < p.tasaFact ? '#dc2626' : '#64748b'
+                      color: p.tasaPago > p.tasaFact ? 'var(--tertiary)' : p.tasaPago < p.tasaFact ? 'var(--error)' : 'var(--on-surface-variant)'
                     }}>
                       {p.tasaPago.toFixed(2)}
                       {p.tasaPago > p.tasaFact ? ' ↑' : p.tasaPago < p.tasaFact ? ' ↓' : ''}
@@ -211,7 +211,7 @@ export default function RentabilidadPage() {
                     <td className="mono" style={{fontSize:12}}>{formatUSD(p.bsRecibidos)}</td>
                     <td className="mono" style={{
                       fontSize:12, fontWeight:700,
-                      color: p.diferenciaBs >= 0 ? '#16a34a' : '#dc2626',
+                      color: p.diferenciaBs >= 0 ? 'var(--tertiary)' : 'var(--error)',
                     }}>
                       {p.diferenciaBs >= 0 ? '+' : ''}{formatUSD(p.diferenciaBs)}
                     </td>

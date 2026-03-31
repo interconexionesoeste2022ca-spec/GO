@@ -63,18 +63,18 @@ export default function PlanesPage() {
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
               <div>
                 <div style={{ fontFamily:'Syne, sans-serif', fontWeight:800, fontSize:18 }}>{p.nombre_plan}</div>
-                <div style={{ fontSize:12, color:'var(--txt-2)', marginTop:2 }}>{p.tecnologia}</div>
+                <div style={{ fontSize:12, color:'var(--on-surface-variant)', marginTop:2 }}>{p.tecnologia}</div>
               </div>
               <span className={`badge ${p.activo !== false ? 'badge-green' : 'badge-gray'}`}>{p.activo !== false ? 'Activo' : 'Inactivo'}</span>
             </div>
-            <div style={{ fontFamily:'IBM Plex Mono, monospace', fontSize:28, fontWeight:700, color:'var(--blue)', marginBottom:12 }}>
-              ${Number(p.precio_usd||0).toFixed(2)} <span style={{ fontSize:14, fontWeight:400, color:'var(--txt-2)' }}>USD/mes</span>
+            <div style={{ fontFamily:'IBM Plex Mono, monospace', fontSize:28, fontWeight:700, color:'var(--tertiary)', marginBottom:12 }}>
+              ${Number(p.precio_usd||0).toFixed(2)} <span style={{ fontSize:14, fontWeight:400, color:'var(--on-surface-variant)' }}>USD/mes</span>
             </div>
-            <div style={{ display:'flex', gap:12, fontSize:13, color:'var(--txt-1)', marginBottom:12 }}>
+            <div style={{ display:'flex', gap:12, fontSize:13, color:'var(--on-surface)', marginBottom:12 }}>
               <div>⬇ <strong>{p.velocidad_bajada}</strong> Mbps</div>
               <div>⬆ <strong>{p.velocidad_subida}</strong> Mbps</div>
             </div>
-            {p.descripcion && <div style={{ fontSize:13, color:'var(--txt-2)', marginBottom:14 }}>{p.descripcion}</div>}
+            {p.descripcion && <div style={{ fontSize:13, color:'var(--on-surface-variant)', marginBottom:14 }}>{p.descripcion}</div>}
             <div style={{ display:'flex', gap:8 }}>
               {canWrite && <button className="btn btn-ghost btn-sm" onClick={() => abrirEditar(p)}>✏ Editar</button>}
               {canDelete && <button className="btn btn-danger btn-sm" onClick={() => eliminar(p.id)}>🗑</button>}
@@ -126,7 +126,7 @@ export default function PlanesPage() {
                   </select>
                 </div>
               </div>
-              {error && <div style={{ marginTop:14, color:'var(--red)', fontSize:13, fontFamily:'IBM Plex Mono, monospace' }}>⚠ {error}</div>}
+              {error && <div style={{ marginTop:14, color:'var(--error)', fontSize:13, fontFamily:'IBM Plex Mono, monospace' }}>⚠ {error}</div>}
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setModal(null)}>Cancelar</button>

@@ -265,9 +265,9 @@ export default function PagosPage() {
           {MESES.map(m=><option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
         <div style={{flex:1}}/>
-        <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,color:'#94a3b8'}}>
-          {filtrados.length} pagos · <span style={{color:'#16a34a',fontWeight:600}}>${formatUSD(totalUSD)} USD</span>
-          {pendientes>0&&<> · <span style={{color:'#d97706'}}>{pendientes} pendiente(s)</span></>}
+        <div style={{fontFamily:'IBM Plex Mono,monospace',fontSize:12,color:'var(--on-surface-variant)'}}>
+          {filtrados.length} pagos · <span style={{color:'var(--tertiary)',fontWeight:600}}>${formatUSD(totalUSD)} USD</span>
+          {pendientes>0&&<> · <span style={{color:'var(--error)'}}>{pendientes} pendiente(s)</span></>}
         </div>
         {canWrite&&<button className="btn btn-primary" onClick={abrirNuevo}>+ Nuevo pago</button>}
       </div>
@@ -276,7 +276,7 @@ export default function PagosPage() {
       <div className="card" style={{padding:0,overflow:'hidden'}}>
         {loading ? (
           <div className="empty">
-            <div style={{width:24,height:24,border:'2px solid #e2e8f0',borderTop:'2px solid #16a34a',borderRadius:'50%',animation:'spin .7s linear infinite',margin:'0 auto'}}/>
+            <div style={{width:24,height:24,border:'2px solid var(--outline)',borderTop:'2px solid var(--tertiary)',borderRadius:'50%',animation:'spin .7s linear infinite',margin:'0 auto'}}/> 
           </div>
         ) : filtrados.length===0 ? (
           <div className="empty">Sin pagos para mostrar</div>
@@ -294,22 +294,22 @@ export default function PagosPage() {
                   <tr key={p.id}>
                     <td>
                       <div style={{fontWeight:500,fontSize:13}}>{p.nombre_cliente||'—'}</div>
-                      <div style={{fontSize:11,color:'#94a3b8',fontFamily:'JetBrains Mono,monospace'}}>{p.cedula_cliente}</div>
+                      <div style={{fontSize:11,color:'var(--on-surface-variant)',fontFamily:'IBM Plex Mono,monospace'}}>{p.cedula_cliente}</div>
                     </td>
                     <td className="mono">{mesLabel(p.mes_cobro)}</td>
                     <td style={{fontSize:12}}>{p.tipo_pago}</td>
-                    <td className="mono" style={{color:'#16a34a',fontWeight:600}}>${formatUSD(p.monto_usd_real||p.monto_facturado_usd)}</td>
+                    <td className="mono" style={{color:'var(--tertiary)',fontWeight:600}}>${formatUSD(p.monto_usd_real||p.monto_facturado_usd)}</td>
                     <td className="mono" style={{color:'#334155',fontSize:12}}>{p.monto_pagado_bs>0?`Bs.${formatUSD(p.monto_pagado_bs)}`:'—'}</td>
-                    <td className="mono" style={{fontSize:11,color:'#94a3b8'}}>{p.tasa_bcv_pago>1?p.tasa_bcv_pago:'—'}</td>
+                    <td className="mono" style={{fontSize:11,color:'var(--on-surface-variant)'}}>{p.tasa_bcv_pago>1?p.tasa_bcv_pago:'—'}</td>
                     <td className="mono" style={{fontSize:11}}>{p.referencia||'—'}</td>
                     <td><span className={BADGE[p.estado_verificacion]||'badge badge-gray'}>{p.estado_verificacion}</span></td>
                     <td>
                       {p.capture_url ? (
                         <a href={p.capture_url} target="_blank" rel="noopener noreferrer"
-                          style={{fontSize:12,color:'#16a34a',textDecoration:'none',fontWeight:600}}>
+                          style={{fontSize:12,color:'var(--tertiary)',textDecoration:'none',fontWeight:600}}>
                           Ver
                         </a>
-                      ) : <span style={{fontSize:11,color:'#94a3b8'}}>—</span>}
+                      ) : <span style={{fontSize:11,color:'var(--on-surface-variant)'}}>—</span>}
                     </td>
                     <td>
                       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
@@ -347,7 +347,7 @@ export default function PagosPage() {
               {error&&<div className="error-msg">⚠ {error}</div>}
 
               {/* Datos generales del pago */}
-              <div style={{fontSize:11,fontWeight:600,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'.8px',marginBottom:10}}>Datos generales</div>
+              <div style={{fontSize:11,fontWeight:600,color:'var(--on-surface-variant)',textTransform:'uppercase',letterSpacing:'.8px',marginBottom:10}}>Datos generales</div>
               <div className="form-row cols-2" style={{marginBottom:14}}>
                 <div className="field-group" style={{gridColumn:'1/-1'}}>
                   <label className="field-label">Cliente *</label>
@@ -395,14 +395,14 @@ export default function PagosPage() {
 
               {/* ── Líneas de pago ──────────────────────────── */}
               <div style={{
-                fontSize:11,fontWeight:600,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'.8px',
+                fontSize:11,fontWeight:600,color:'var(--on-surface-variant)',textTransform:'uppercase',letterSpacing:'.8px',
                 marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center',
               }}>
                 <span>Comprobantes de pago ({lineas.length})</span>
                 {form.monto_facturado_usd && totalLineasUSD > 0 && (
                   <span style={{
-                    fontFamily:'JetBrains Mono,monospace', fontSize:12,
-                    color: totalLineasUSD >= Number(form.monto_facturado_usd) ? '#16a34a' : '#d97706',
+                    fontFamily:'IBM Plex Mono,monospace', fontSize:12,
+                    color: totalLineasUSD >= Number(form.monto_facturado_usd) ? 'var(--tertiary)' : 'var(--error)',
                     fontWeight:700,
                   }}>
                     ${formatUSD(totalLineasUSD)} / ${formatUSD(form.monto_facturado_usd)} USD
@@ -423,9 +423,9 @@ export default function PagosPage() {
                       <div style={{
                         position:'absolute', top:8, right:8, display:'flex', alignItems:'center', gap:8,
                       }}>
-                        <span style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>Pago {idx+1}</span>
+                        <span style={{fontSize:11,fontWeight:700,color:'var(--on-surface-variant)'}}>Pago {idx+1}</span>
                         <button onClick={()=>quitarLinea(idx)}
-                          style={{background:'none',border:'none',cursor:'pointer',color:'#dc2626',fontSize:14,fontWeight:700}}>✕</button>
+                          style={{background:'none',border:'none',cursor:'pointer',color:'var(--error)',fontSize:14,fontWeight:700}}>✕</button>
                       </div>
                     )}
 
@@ -450,13 +450,13 @@ export default function PagosPage() {
                             onBlur={()=>verificarRef(idx)}
                             style={{
                               paddingRight:32,
-                              borderColor: linea.refStatus === 'duplicada' ? '#dc2626' : linea.refStatus === 'ok' ? '#16a34a' : undefined,
+                              borderColor: linea.refStatus === 'duplicada' ? 'var(--error)' : linea.refStatus === 'ok' ? 'var(--tertiary)' : undefined,
                             }}/>
                           {/* Indicador de referencia */}
                           <div style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:14}}>
-                            {linea.refStatus === 'checking' && <span style={{color:'#94a3b8'}}>⏳</span>}
-                            {linea.refStatus === 'ok' && <span style={{color:'#16a34a'}}>✓</span>}
-                            {linea.refStatus === 'duplicada' && <span style={{color:'#dc2626'}}>⚠</span>}
+                            {linea.refStatus === 'checking' && <span style={{color:'var(--on-surface-variant)'}}>⏳</span>}
+                            {linea.refStatus === 'ok' && <span style={{color:'var(--tertiary)'}}>✓</span>}
+                            {linea.refStatus === 'duplicada' && <span style={{color:'var(--error)'}}>⚠</span>}
                           </div>
                         </div>
                         {linea.refStatus === 'duplicada' && (

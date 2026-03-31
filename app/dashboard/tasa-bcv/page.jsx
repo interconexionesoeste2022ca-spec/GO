@@ -53,11 +53,11 @@ export default function TasaBcvPage() {
           <div className="card-title">Tasa BCV hoy — {hoy}</div>
           {loading ? <div className="empty">Cargando…</div> : tasaHoy ? (
             <div>
-              <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:36, fontWeight:700, color:'var(--blue)', margin:'12px 0 4px' }}>
+              <div style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:36, fontWeight:700, color:'var(--primary)', margin:'12px 0 4px' }}>
                 Bs. {Number(tasaHoy.tasa_usd_bs).toLocaleString('es-VE', { minimumFractionDigits:2 })}
               </div>
-              <div style={{ fontSize:13, color:'var(--txt-2)' }}>por 1 USD · Fuente: {tasaHoy.fuente}</div>
-              <div style={{ fontSize:12, color:'var(--txt-2)', marginTop:4 }}>Registrada por: {tasaHoy.registrado_por || '—'}</div>
+              <div style={{ fontSize:13, color:'var(--on-surface-variant)' }}>por 1 USD · Fuente: {tasaHoy.fuente}</div>
+              <div style={{ fontSize:12, color:'var(--on-surface-variant)', marginTop:4 }}>Registrada por: {tasaHoy.registrado_por || '—'}</div>
             </div>
           ) : (
             <div className="empty" style={{ padding:20 }}>Sin tasa registrada hoy</div>
@@ -88,7 +88,7 @@ export default function TasaBcvPage() {
               onClick={guardar} disabled={saving}>
               {saving ? 'Guardando…' : '💾 Guardar tasa del día'}
             </button>
-            <p style={{ fontSize:12, color:'var(--txt-2)', marginTop:8 }}>
+            <p style={{ fontSize:12, color:'var(--on-surface-variant)', marginTop:8 }}>
               Si ya existe una tasa para hoy, se sobreescribirá.
             </p>
           </div>
@@ -111,11 +111,11 @@ export default function TasaBcvPage() {
               {historial.map(t => (
                 <tr key={t.id}>
                   <td className="mono">{t.fecha}</td>
-                  <td className="mono" style={{ color:'var(--blue)', fontWeight:600 }}>
+                  <td className="mono" style={{ color:'var(--primary)', fontWeight:600 }}>
                     Bs. {Number(t.tasa_usd_bs).toLocaleString('es-VE', { minimumFractionDigits:2 })}
                   </td>
                   <td>{t.fuente}</td>
-                  <td style={{ color:'var(--txt-2)' }}>{t.registrado_por || '—'}</td>
+                  <td style={{ color:'var(--on-surface-variant)' }}>{t.registrado_por || '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -120,7 +120,7 @@ export default function ClientesPage() {
           </select>
         )}
         <div style={{ flex:1 }}/>
-        <span style={{ fontSize:12, color:'#94a3b8', fontFamily:'JetBrains Mono,monospace' }}>
+        <span style={{ fontSize:12, color:'var(--on-surface-variant)', fontFamily:'IBM Plex Mono,monospace' }}>
           {filtrados.length} cliente{filtrados.length !== 1 ? 's' : ''}
         </span>
         <button className="btn btn-ghost btn-sm" onClick={cargar}>↺</button>
@@ -147,7 +147,7 @@ export default function ClientesPage() {
               {loading && (
                 <tr><td colSpan={8}>
                   <div style={{ display:'flex', justifyContent:'center', padding:32 }}>
-                    <div style={{ width:24, height:24, border:'2px solid #e2e8f0', borderTop:'2px solid #16a34a', borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
+                    <div style={{ width:24, height:24, border:'2px solid var(--outline)', borderTop:'2px solid var(--tertiary)', borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
                   </div>
                 </td></tr>
               )}
@@ -159,7 +159,7 @@ export default function ClientesPage() {
                   <td>
                     <div style={{ fontWeight:600, fontSize:13 }}>{c.nombre_razon_social}</div>
                     {c.notas_cobro && (
-                      <div style={{ fontSize:10, color:'#94a3b8', marginTop:2 }} title={c.notas_cobro}>
+                      <div style={{ fontSize:10, color:'var(--on-surface-variant)', marginTop:2 }} title={c.notas_cobro}>
                         📝 {c.notas_cobro.slice(0,30)}{c.notas_cobro.length>30?'…':''}
                       </div>
                     )}
@@ -170,17 +170,16 @@ export default function ClientesPage() {
                   <td>
                     <div style={{
                       display:'inline-flex', alignItems:'center', gap:5,
-                      background: c.dia_corte && c.dia_corte !== 5 ? '#fef9c3' : '#f0fdf4',
-                      border: `1px solid ${c.dia_corte && c.dia_corte !== 5 ? '#fde68a' : '#bbf7d0'}`,
-                      color: c.dia_corte && c.dia_corte !== 5 ? '#854d0e' : '#166534',
+                      background: c.dia_corte && c.dia_corte !== 5 ? 'var(--tertiary-container)' : 'var(--primary-container)',
+                      color: c.dia_corte && c.dia_corte !== 5 ? 'var(--on-tertiary-container)' : 'var(--on-primary-container)',
                       padding:'2px 10px', borderRadius:20,
-                      fontFamily:'JetBrains Mono,monospace', fontSize:12, fontWeight:700,
+                      fontFamily:'IBM Plex Mono,monospace', fontSize:12, fontWeight:700,
                     }}>
                       {c.dia_corte && c.dia_corte !== 5 ? '⚡' : '📅'} Día {c.dia_corte ?? 5}
                     </div>
                   </td>
                   <td><span className={`badge ${ESTADO_BADGE[c.estado_servicio]||'badge-gray'}`}>{c.estado_servicio}</span></td>
-                  <td style={{ fontSize:12, color:'#64748b' }}>{c.zona_sector || '—'}</td>
+                  <td style={{ fontSize:12, color:'var(--on-surface-variant)' }}>{c.zona_sector || '—'}</td>
                   <td>
                     <div style={{ display:'flex', gap:6 }}>
                       {canWrite && (
@@ -203,7 +202,7 @@ export default function ClientesPage() {
       {(modal === 'crear' || modal === 'editar') && (
         <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal" style={{ maxWidth:680 }}>
-            <div className="modal-header">
+            <div className="modal-header" style={{ borderBottom:`1px solid var(--outline)` }}>
               <div className="modal-title">{modal === 'crear' ? 'Nuevo cliente' : 'Editar cliente'}</div>
               <button className="modal-close" onClick={() => setModal(null)}>✕</button>
             </div>
@@ -211,7 +210,7 @@ export default function ClientesPage() {
               {error && <div className="error-msg">⚠ {error}</div>}
 
               {/* Sección datos personales */}
-              <div style={{ fontSize:11, fontWeight:600, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Datos personales</div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Datos personales</div>
               <div className="form-row cols-2" style={{ marginBottom:16 }}>
                 <div className="field-group">
                   <label className="field-label">Tipo *</label>
@@ -246,7 +245,7 @@ export default function ClientesPage() {
               </div>
 
               {/* Sección servicio */}
-              <div style={{ fontSize:11, fontWeight:600, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Servicio</div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Servicio</div>
               <div className="form-row cols-2" style={{ marginBottom:16 }}>
                 <div className="field-group">
                   <label className="field-label">Plan</label>
@@ -283,10 +282,10 @@ export default function ClientesPage() {
 
               {/* Sección cobro — LA MÁS IMPORTANTE */}
               <div style={{
-                background:'#f0fdf4', border:'1px solid #bbf7d0',
+                background:'var(--primary-container)', 
                 borderRadius:12, padding:16, marginBottom:16,
               }}>
-                <div style={{ fontSize:12, fontWeight:700, color:'#166534', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--on-primary-container)', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
                   <span>💰</span> Configuración de cobro
                 </div>
                 <div className="form-row cols-2">
@@ -302,7 +301,7 @@ export default function ClientesPage() {
                         <option key={d} value={d}>Día {d}</option>
                       ))}
                     </select>
-                    <div style={{ fontSize:11, color:'#64748b', marginTop:4 }}>
+                    <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginTop:4 }}>
                       El pago vence el día {form.dia_corte ?? 5} de cada mes
                     </div>
                   </div>
@@ -310,7 +309,7 @@ export default function ClientesPage() {
                     <label className="field-label">Notas de cobro</label>
                     <input className="input" value={form.notas_cobro||''} onChange={e => set('notas_cobro', e.target.value)}
                       placeholder="Ej: Paga quincena, solo efectivo…" />
-                    <div style={{ fontSize:11, color:'#64748b', marginTop:4 }}>
+                    <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginTop:4 }}>
                       Visible en la pantalla de cobranza
                     </div>
                   </div>
@@ -318,7 +317,7 @@ export default function ClientesPage() {
               </div>
 
               {/* Sección ubicación */}
-              <div style={{ fontSize:11, fontWeight:600, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Ubicación</div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:10 }}>Ubicación</div>
               <div className="form-row cols-2" style={{ marginBottom:16 }}>
                 <div className="field-group" style={{ gridColumn:'1 / -1' }}>
                   <label className="field-label">Dirección</label>
@@ -340,7 +339,7 @@ export default function ClientesPage() {
                   <div className="field-group" style={{ gridColumn:'1 / -1' }}>
                     <a href={`https://www.google.com/maps?q=${form.latitud},${form.longitud}`}
                       target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize:12, color:'#16a34a', fontWeight:500 }}>
+                      style={{ fontSize:12, color:'var(--tertiary)', fontWeight:500 }}>
                       → Ver en Google Maps
                     </a>
                   </div>
@@ -367,14 +366,14 @@ export default function ClientesPage() {
       {modal === 'eventos' && clienteActivo && (
         <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal" style={{ maxWidth:560 }}>
-            <div className="modal-header">
+            <div className="modal-header" style={{ borderBottom:`1px solid var(--outline)` }}>
               <div className="modal-title">Eventos — {clienteActivo.nombre_razon_social}</div>
               <button className="modal-close" onClick={() => setModal(null)}>✕</button>
             </div>
             <div className="modal-body">
               {canWrite && (
-                <div style={{ background:'#f8fafc', borderRadius:12, padding:16, marginBottom:20, border:'1px solid #e2e8f0' }}>
-                  <div style={{ fontWeight:600, marginBottom:12, fontSize:13, color:'#0f172a' }}>Registrar evento</div>
+                <div style={{ background:'var(--primary-container)', borderRadius:12, padding:16, marginBottom:20, border:'none' }}>
+                  <div style={{ fontWeight:600, marginBottom:12, fontSize:13, color:'var(--on-primary-container)' }}>Registrar evento</div>
                   <div className="form-row cols-2" style={{ marginBottom:10 }}>
                     <div className="field-group">
                       <label className="field-label">Tipo</label>
@@ -398,26 +397,26 @@ export default function ClientesPage() {
                 </div>
               )}
 
-              <div style={{ fontWeight:600, marginBottom:12, fontSize:13 }}>Historial ({historial.length})</div>
+              <div style={{ fontWeight:600, marginBottom:12, fontSize:13, color:'var(--on-surface)' }}>Historial ({historial.length})</div>
               {historial.length === 0 ? (
                 <div className="empty" style={{ padding:'24px 0' }}>Sin eventos registrados</div>
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                   {[...historial].reverse().map((ev, i) => {
-                    const colMap = { Corte:'#dc2626', Reconexión:'#16a34a', Nota:'#7c3aed' }
-                    const bgMap  = { Corte:'#fef2f2', Reconexión:'#f0fdf4', Nota:'#f5f3ff' }
+                    const colMap = { Corte:'var(--error)', Reconexión:'var(--tertiary)', Nota:'var(--primary)' }
+                    const bgMap  = { Corte:'var(--error-container)', Reconexión:'var(--tertiary-container)', Nota:'var(--primary-container)' }
                     return (
                       <div key={i} style={{
                         padding:'10px 14px', borderRadius:10,
-                        background: bgMap[ev.tipo] || '#f8fafc',
-                        borderLeft:`3px solid ${colMap[ev.tipo] || '#94a3b8'}`,
+                        background: bgMap[ev.tipo] || 'var(--surface-container-low)',
+                        borderLeft:`3px solid ${colMap[ev.tipo] || 'var(--outline)'}`,
                       }}>
                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                           <span style={{ fontWeight:700, fontSize:13, color: colMap[ev.tipo] }}>{ev.tipo}</span>
-                          <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#94a3b8' }}>{ev.fecha}</span>
+                          <span style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:11, color:'var(--on-surface-variant)' }}>{ev.fecha}</span>
                         </div>
-                        {ev.motivo && <div style={{ fontSize:13, color:'#334155', marginTop:4 }}>{ev.motivo}</div>}
-                        {ev.registrado_por && <div style={{ fontSize:11, color:'#94a3b8', marginTop:3 }}>por {ev.registrado_por}</div>}
+                        {ev.motivo && <div style={{ fontSize:13, color:'var(--on-surface)', marginTop:4 }}>{ev.motivo}</div>}
+                        {ev.registrado_por && <div style={{ fontSize:11, color:'var(--on-surface-variant)', marginTop:3 }}>por {ev.registrado_por}</div>}
                       </div>
                     )
                   })}

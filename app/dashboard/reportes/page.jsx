@@ -96,25 +96,24 @@ export default function ReportesPage() {
         {!loading && filtrados.length === 0 && <div className="empty">Sin reportes</div>}
         {filtrados.map(r => (
           <div key={r.id} className="card" style={{
-            borderLeft: `4px solid ${r.prioridad === 'critica' ? 'var(--red)' : r.prioridad === 'alta' ? 'var(--amber)' : r.prioridad === 'media' ? 'var(--blue)' : 'var(--txt-2)'}`,
-          }}>
+            borderLeft: `4px solid ${r.prioridad === 'critica' ? 'var(--error)' : r.prioridad === 'alta' ? 'var(--error)' : r.prioridad === 'media' ? 'var(--primary)' : 'var(--outline)'}`,          }}>
             <div style={{ display:'flex', gap:6, marginBottom:10 }}>
               <span className={`badge ${COL_ESTADO[r.estado]||'badge-gray'}`}>{r.estado}</span>
               <span className={`badge ${COL_PRIO[r.prioridad]||'badge-gray'}`}>{r.prioridad}</span>
               <span className="badge badge-gray" style={{ marginLeft:'auto' }}>{r.tipo}</span>
             </div>
             <div style={{ fontWeight:700, fontSize:15, marginBottom:6 }}>{r.titulo}</div>
-            <div style={{ fontSize:13, color:'var(--txt-1)', marginBottom:8 }}>
+            <div style={{ fontSize:13, color:'var(--on-surface)', marginBottom:8 }}>
               👤 {r.clientes?.nombre_razon_social || '—'}
             </div>
             {r.descripcion && (
-              <div style={{ fontSize:13, color:'var(--txt-2)', marginBottom:8, lineHeight:1.5 }}>
+              <div style={{ fontSize:13, color:'var(--on-surface-variant)', marginBottom:8, lineHeight:1.5 }}>
                 {r.descripcion.slice(0, 120)}{r.descripcion.length > 120 ? '…' : ''}
               </div>
             )}
-            {r.tecnico && <div style={{ fontSize:12, color:'var(--txt-2)', marginBottom:8 }}>🔧 {r.tecnico}</div>}
+            {r.tecnico && <div style={{ fontSize:12, color:'var(--on-surface-variant)', marginBottom:8 }}>🔧 {r.tecnico}</div>}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:12 }}>
-              <div className="mono" style={{ fontSize:11, color:'var(--txt-2)' }}>{r.fecha_reporte}</div>
+              <div className="mono" style={{ fontSize:11, color:'var(--on-surface-variant)' }}>{r.fecha_reporte}</div>
               <div style={{ display:'flex', gap:6 }}>
                 {canWrite && r.estado !== 'cerrado' && siguienteEstado[r.estado] && (
                   <button className="btn btn-ghost btn-sm" onClick={() => cambiarEstado(r.id, siguienteEstado[r.estado])}>
@@ -130,7 +129,7 @@ export default function ReportesPage() {
               </div>
             </div>
             {r.solucion && (
-              <div style={{ marginTop:10, padding:'8px 12px', background:'rgba(5,150,105,0.06)', borderRadius:8, fontSize:13, color:'var(--txt-1)' }}>
+              <div style={{ marginTop:10, padding:'8px 12px', background:'var(--tertiary-container)', borderRadius:8, fontSize:13, color:'var(--on-surface)' }}>
                 ✅ <strong>Solución:</strong> {r.solucion}
               </div>
             )}

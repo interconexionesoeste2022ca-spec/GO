@@ -95,7 +95,7 @@ export default function FidelidadPage() {
             {!loading && filtrado.length === 0 && <tr><td colSpan={8}><div className="empty">Sin resultados</div></td></tr>}
             {filtrado.map((c, i) => (
               <tr key={c.id}>
-                <td className="mono" style={{ color:'var(--txt-2)', width:40 }}>
+                <td className="mono" style={{ color:'var(--on-surface-variant)', width:40 }}>
                   {i < 3 ? ['🥇','🥈','🥉'][i] : `#${i+1}`}
                 </td>
                 <td style={{ fontWeight:600 }}>{c.nombre_razon_social}</td>
@@ -114,7 +114,7 @@ export default function FidelidadPage() {
                 </td>
                 <td className="mono" style={{ textAlign:'center' }}>{c.pagosVerificados}</td>
                 <td className="mono" style={{ textAlign:'center', color: c.cortes > 0 ? 'var(--red)' : 'inherit' }}>{c.cortes}</td>
-                <td style={{ fontSize:13, color:'var(--txt-1)' }}>{c.plan_id || '—'}</td>
+                <td style={{ fontSize:13, color:'var(--on-surface)' }}>{c.plan_id || '—'}</td>
                 <td>
                   <span className={`badge ${c.estado_servicio === 'Activo' ? 'badge-green' : c.estado_servicio === 'Cortado' ? 'badge-red' : 'badge-amber'}`}>
                     {c.estado_servicio}
@@ -126,7 +126,7 @@ export default function FidelidadPage() {
         </table>
       </div>
 
-      <div style={{ marginTop:16, padding:'14px 18px', background:'rgba(124,58,237,0.06)', borderRadius:10, fontSize:13, color:'var(--txt-1)', lineHeight:1.7 }}>
+      <div style={{ marginTop:16, padding:'14px 18px', background:'var(--primary-container)', borderRadius:10, fontSize:13, color:'var(--on-surface)', lineHeight:1.7 }}>
         <strong>Reglas de fidelidad:</strong> Score = (pagos verificados × 10) − (cortes × 15) &nbsp;·&nbsp;
         🔘 NUEVO (score=0, pagos=0) &nbsp;·&nbsp; 🥉 BRONCE (pagos≥1) &nbsp;·&nbsp; 🥈 PLATA (cortes≤1, pagos≥3) &nbsp;·&nbsp; 🥇 ORO (sin cortes, pagos≥6) &nbsp;·&nbsp; 💎 PLATINO (sin cortes, pagos≥12)
       </div>

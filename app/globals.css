@@ -1,29 +1,98 @@
-/* ─── GALANET OESTE — Estilos Globales ─── */
+/* ─── GALANET OESTE v8.2 — Emerald Sentinel Design System ─── */
 :root {
-  --bg-primary: #f6f8fa;
-  --bg-surface: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border: #e2e8f0;
-  --accent: #16a34a;
-  --accent-light: #dcfce7;
-  --danger: #dc2626;
-  --danger-light: #fee2e2;
-  --warning: #d97706;
-  --warning-light: #fef9c3;
+  /* Layout */
+  --sidebar-width: 256px;
+  --header-height: 64px;
+  
+  /* Color Tokens - Primary (Navy) */
+  --primary: #525f71;
+  --primary-container: #d6e4f9;
+  --primary-dim: #465365;
+  --primary-fixed: #d6e4f9;
+  --primary-fixed-dim: #c8d5ea;
+  --on-primary: #f5f8ff;
+  --on-primary-container: #455364;
+  --on-primary-fixed: #334051;
+  --on-primary-fixed-variant: #4f5d6e;
+  
+  /* Color Tokens - Secondary (Navy Variant) */
+  --secondary: #526074;
+  --secondary-container: #d5e3fc;
+  --secondary-dim: #465468;
+  --secondary-fixed: #d5e3fc;
+  --secondary-fixed-dim: #c7d5ed;
+  --secondary-dim: #465468;
+  --on-secondary: #f8f8ff;
+  --on-secondary-container: #455367;
+  --on-secondary-fixed: #324053;
+  --on-secondary-fixed-variant: #4e5c71;
+  
+  /* Color Tokens - Tertiary (Emerald Green) */
+  --tertiary: #006d4b;
+  --tertiary-container: #7ff3be;
+  --tertiary-dim: #005f41;
+  --tertiary-fixed: #7ff3be;
+  --tertiary-fixed-dim: #71e4b1;
+  --on-tertiary: #e6ffef;
+  --on-tertiary-container: #005a3d;
+  --on-tertiary-fixed: #00452e;
+  --on-tertiary-fixed-variant: #006545;
+  
+  /* Error States */
+  --error: #9f403d;
+  --error-container: #fe8983;
+  --error-dim: #4e0309;
+  --on-error: #fff7f6;
+  --on-error-container: #752121;
+  
+  /* Surface Hierarchy */
+  --surface: #f7f9fb;
+  --surface-bright: #f7f9fb;
+  --surface-dim: #cfdce3;
+  --surface-container: #e8eff3;
+  --surface-container-low: #f0f4f7;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #e1e9ee;
+  --surface-container-highest: #d9e4ea;
+  --surface-tint: #525f71;
+  --background: #f7f9fb;
+  --on-background: #2a3439;
+  --on-surface: #2a3439;
+  --on-surface-variant: #566166;
+  
+  /* Outline & Variants */
+  --outline: #717c82;
+  --outline-variant: #a9b4b9;
+  --surface-variant: #d9e4ea;
+  
+  /* Inverse Colors */
+  --inverse-primary: #d8e6fc;
+  --inverse-surface: #0b0f10;
+  --inverse-on-surface: #9a9d9f;
+  
+  /* Legacy Support */
+  --bg-primary: var(--surface);
+  --bg-surface: var(--surface-container-lowest);
+  --text-primary: var(--on-surface);
+  --text-secondary: var(--on-surface-variant);
+  --text-muted: var(--outline-variant);
+  --border: var(--outline);
+  --accent: var(--tertiary);
+  --accent-light: var(--tertiary-container);
+  --danger: var(--error);
+  --danger-light: var(--error-container);
 }
 
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  font-family: 'Inter', 'DM Sans', Arial, Helvetica, sans-serif;
 }
 
 body {
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  font-family: 'Inter', 'DM Sans', Arial, Helvetica, sans-serif;
+  color: var(--on-surface);
+  background: var(--surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -39,7 +108,28 @@ a {
   text-decoration: none;
 }
 
+/* Typography */
+h1, h2, h3, h4, h5, h6,
+.font-headline, 
+[class*="headline"] {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+}
+
+.font-body,
+[class*="body"] {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+.font-label,
+[class*="label"] {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
 ::selection {
-  background: var(--accent-light);
-  color: var(--accent);
+  background: var(--tertiary-container);
+  color: var(--on-tertiary-container);
 }
