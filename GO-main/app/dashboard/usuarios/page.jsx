@@ -14,26 +14,15 @@ const PERMISOS_ROL = {
 }
 
 export default function UsuariosPage() {
+  const sesion = getSesion()
   const router = useRouter()
-  // getSesion() puede ser null en el primer render (la sesión la carga el layout async)
-  // Usamos state local que re-lee cada 100ms hasta que esté disponible
-  const [sesion, setSesion] = useState(() => getSesion())
-
-  useEffect(() => {
-    if (sesion) return // ya tenemos sesión, no seguir polling
-    const iv = setInterval(() => {
-      const s = getSesion()
-      if (s) { setSesion(s); clearInterval(iv) }
-    }, 100)
-    return () => clearInterval(iv)
-  }, [sesion])
 
   useEffect(() => {
     if (sesion && sesion.rol !== 'admin') router.replace('/dashboard')
   }, [sesion, router])
 
   const [usuarios, setUsuarios] = useState([])
-  const [loading, setLoading]   = useState(false)
+  const [loading, setLoading]   = useState(true)
   const [modal, setModal]       = useState(null)
   const [form, setForm]         = useState(VACÍO)
   const [userActivo, setUserActivo] = useState(null)
@@ -124,11 +113,9 @@ export default function UsuariosPage() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="loading-row">Cargando usuarios…</td></tr>
-            ) : usuarios.length === 0 ? (
-              <tr><td colSpan={6}><div className="empty">Sin usuarios registrados</div></td></tr>
-            ) : usuarios.map(u => (
+            {loading && <tr><td colSpan={6} className="loading-row">Cargando usuarios…</td></tr>}
+            {!loading && usuarios.length === 0 && <tr><td colSpan={6}><div className="empty">Sin usuarios</div></td></tr>}
+            {usuarios.map(u => (
               <tr key={u.usuario}>
                 <td>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
