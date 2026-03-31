@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { getToken, getSesion, cerrarSesion } from '@/lib/api'
+import { cargarSesion, cerrarSesion } from '@/lib/api'
 
 const ICONS = {
   dashboard: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
@@ -28,8 +28,8 @@ const NAV = [
   { href:'/dashboard/reportes',  key:'reportes',  label:'Reportes'   },
   { href:'/dashboard/tasa-bcv',  key:'tasa',      label:'Tasa BCV'   },
   { href:'/dashboard/fidelidad', key:'fidelidad', label:'Fidelidad'  },
-  { href:'/dashboard/cobranza',  key:'tasa',     label:'Cobranza'   },
-  { href:'/dashboard/mapa',      key:'clientes',  label:'Mapa'        },
+  { href:'/dashboard/cobranza',  key:'cobranza', label:'Cobranza'   },
+  { href:'/dashboard/mapa',      key:'mapa',     label:'Mapa'        },
   { href:'/dashboard/usuarios',  key:'usuarios',  label:'Usuarios',  adminOnly:true },
 ]
 
@@ -51,13 +51,14 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     setMounted(true)
-    const t = getToken(), s = getSesion()
-    if (!t || !s) { router.replace('/login'); return }
-    setSesion(s)
+    cargarSesion().then(s => {
+      if (!s) { router.replace('/login'); return }
+      setSesion(s)
+    })
   }, [router])
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/login', { method:'DELETE' }).catch(()=>{})
+    await fetch('/api/auth/login', { method:'DELETE', credentials:'same-origin' }).catch(()=>{})
     cerrarSesion()
     router.push('/login')
   }, [router])
@@ -156,11 +157,7 @@ export default function DashboardLayout({ children }) {
     width:52px;height:44px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
     color:#cbd5e1;cursor:pointer;border:none;background:transparent;
-    transition:background 0.15s,color 0.15s;position:relative;
-  }
-  .gn-logout:    <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
-  cobranza: <><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/><line x1="12" y1="14" x2="12" y2="17"/><circle cx="12" cy="14" r="2"/></>,
-  mapa:     <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+  .gn-logout:hover{background:#fef2f2;color:#ef4444;}
 
   /* ─── TOPBAR ─────────────────────────────────── */
   .gn-top{

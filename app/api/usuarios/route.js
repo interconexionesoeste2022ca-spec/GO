@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin, getSesion, assertRol, registrarAuditoria, respError } from '@/lib/apiHelpers'
-import crypto from 'crypto'
-
-function sha256(text) {
-  return crypto.createHash('sha256').update(text).digest('hex')
-}
+import bcrypt from 'bcryptjs'
 
 const ROLES_VALIDOS = ['admin', 'staff', 'verificador', 'espectador']
+const BCRYPT_ROUNDS = 12
 
 export async function GET(req) {
   try {
@@ -38,9 +35,12 @@ export async function POST(req) {
     const { data: existe } = await supabaseAdmin.from('usuarios').select('usuario').eq('usuario', usuarioNorm).single()
     if (existe) return NextResponse.json({ ok: false, msg: 'El usuario ya existe.' }, { status: 409 })
 
+    // Hash con bcrypt (seguro contra fuerza bruta)
+    const passwordHash = await bcrypt.hash(password.trim(), BCRYPT_ROUNDS)
+
     const { data, error } = await supabaseAdmin.from('usuarios').insert([{
       usuario: usuarioNorm,
-      password_hash: sha256(password.trim()),
+      password_hash: passwordHash,
       rol: rol.toLowerCase(),
       activo: activo ?? true,
       creado_en: new Date().toISOString(),
@@ -70,7 +70,7 @@ export async function PATCH(req) {
     if (activo !== undefined) update.activo = activo
     if (password) {
       if (password.length < 6) return NextResponse.json({ ok: false, msg: 'Contraseña muy corta.' }, { status: 400 })
-      update.password_hash = sha256(password.trim())
+      update.password_hash = await bcrypt.hash(password.trim(), BCRYPT_ROUNDS)
     }
     if (!Object.keys(update).length)
       return NextResponse.json({ ok: false, msg: 'Nada que actualizar.' }, { status: 400 })

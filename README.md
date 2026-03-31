@@ -1,38 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 GALANET OESTE v8.1
 
-## Getting Started
+Sistema de gestión integral para ISP (Proveedor de Servicios de Internet), construido con **Next.js 14** + **Supabase**.
 
-First, run the development server:
+## ⚡ Stack Tecnológico
+
+| Tecnología | Uso |
+|------------|-----|
+| [Next.js 14](https://nextjs.org) | Framework principal (App Router) |
+| [Supabase](https://supabase.com) | Base de datos PostgreSQL + Storage |
+| [JWT + jose](https://github.com/panva/jose) | Autenticación con cookies httpOnly |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Hashing seguro de contraseñas |
+| [SweetAlert2](https://sweetalert2.github.io) | Alertas y confirmaciones |
+| [Vercel](https://vercel.com) | Hosting y despliegue |
+
+## 🚀 Inicio Rápido
+
+### Requisitos
+- Node.js 18+
+- Cuenta en Supabase con proyecto configurado
+
+### Configuración
 
 ```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Configurar variables de entorno
+cp env.local.example .env.local
+# Edita .env.local con tus credenciales de Supabase y JWT_SECRET
+
+# 3. Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+galanet-oeste/
+├── app/
+│   ├── api/                    # API Routes (servidor)
+│   │   ├── auth/login/         # POST login, DELETE logout
+│   │   ├── auth/me/            # GET sesión actual (cookie)
+│   │   ├── clientes/           # CRUD clientes
+│   │   ├── pagos/              # CRUD pagos + verificaciones
+│   │   ├── planes/             # CRUD planes de internet
+│   │   ├── cuentas/            # CRUD cuentas bancarias
+│   │   ├── reportes/           # CRUD tickets técnicos
+│   │   ├── tasa-bcv/           # Tasa del dólar BCV
+│   │   ├── estadisticas/       # KPIs del dashboard
+│   │   ├── cobranza/           # Vista de cobranza mensual
+│   │   ├── usuarios/           # Gestión de usuarios (admin)
+│   │   └── upload/             # Subida de comprobantes
+│   ├── dashboard/              # Páginas del panel
+│   │   ├── layout.jsx          # Sidebar + Topbar
+│   │   ├── page.jsx            # Dashboard principal (KPIs)
+│   │   ├── clientes/           # Gestión de clientes
+│   │   ├── pagos/              # Registro y verificación de pagos
+│   │   ├── planes/             # Planes de internet
+│   │   ├── cuentas/            # Cuentas bancarias
+│   │   ├── reportes/           # Tickets técnicos
+│   │   ├── tasa-bcv/           # Tasa BCV
+│   │   ├── fidelidad/          # Ranking de fidelización
+│   │   ├── cobranza/           # Panel de cobranza
+│   │   ├── mapa/               # Mapa de clientes
+│   │   └── usuarios/           # Gestión de accesos
+│   └── login/                  # Página de login
+├── lib/
+│   ├── api.js                  # Cliente fetch autenticado (frontend)
+│   ├── apiHelpers.js           # Helpers compartidos (servidor)
+│   └── fidelidad.js            # Lógica de fidelización (compartido)
+├── middleware.js                # Protección de rutas con JWT
+└── public/equipo/              # Imágenes del equipo
+```
 
-## Learn More
+## 👥 Roles de Usuario
 
-To learn more about Next.js, take a look at the following resources:
+| Rol | Escribir | Eliminar | Verificar pagos | Gestionar usuarios |
+|-----|----------|----------|-----------------|--------------------|
+| **admin** | ✅ | ✅ | ✅ | ✅ |
+| **staff** | ✅ | ❌ | ✅ | ❌ |
+| **verificador** | ❌ | ❌ | ✅ | ❌ |
+| **espectador** | ❌ | ❌ | ❌ | ❌ |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔐 Seguridad
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Contraseñas hasheadas con **bcrypt** (12 rounds)
+- JWT almacenado en **cookie httpOnly** (no en localStorage)
+- Middleware Edge verifica JWT criptográficamente con **jose**
+- Sistema de **auditoría** registra todas las operaciones
+- Roles y permisos verificados en cada API route
 
-## Deploy on Vercel
+## 📊 Tablas Supabase
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`clientes` · `pagos` · `planes` · `cuentas` · `reportes` · `usuarios` · `tasa_bcv` · `auditoria`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# GO" 
-"# GO" 
+## 🚀 Despliegue
+
+```bash
+npm run build     # Construir para producción
+vercel --prod     # Desplegar en Vercel
+```
+
+---
+
+© 2026 Galanet Oeste — Sistema de Gestión ISP

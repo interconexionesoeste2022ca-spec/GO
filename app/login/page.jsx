@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { guardarSesion, getToken } from '@/lib/api'
+import { guardarSesion, cargarSesion } from '@/lib/api'
 
 export default function LoginPage() {
   const router    = useRouter()
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const animRef = useRef(null)
 
   useEffect(() => {
-    if (getToken()) router.replace('/dashboard')
+    cargarSesion().then(s => { if (s) router.replace('/dashboard') })
   }, [router])
 
   // ── Canvas fondo ──────────────────────────────────────────────
@@ -115,13 +115,14 @@ export default function LoginPage() {
     try {
       const res  = await fetch('/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ usuario: form.usuario.trim().toLowerCase(), password: form.password }),
       })
       const data = await res.json()
       if (!data.ok) throw new Error(data.msg)
 
       setPhase('success')
-      guardarSesion(data.token, data.usuario, data.rol)
+      guardarSesion(data.usuario, data.rol)
       await new Promise(r => setTimeout(r, 1400)) // deja ver la animación de éxito
       router.push('/dashboard')
     } catch (err) {
