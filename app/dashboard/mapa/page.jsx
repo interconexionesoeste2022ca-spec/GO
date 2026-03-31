@@ -3,10 +3,10 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getSesion, tienePermiso, alertaExito, alertaError } from '@/lib/api'
 
 const ESTADO_COLOR = {
-  Activo:    { pin:'#16a34a', bg:'#dcfce7', txt:'#166534', ring:'#bbf7d0' },
-  Cortado:   { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b', ring:'#fecaca' },
-  Moroso:    { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e', ring:'#fde68a' },
-  Suspendido:{ pin:'#6b7280', bg:'#f1f5f9', txt:'#374151', ring:'#e2e8f0' },
+  Activo:     { pin:'#16a34a', bg:'#dcfce7', txt:'#166534', ring:'#bbf7d0' },
+  Cortado:    { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b', ring:'#fecaca' },
+  Deudor:     { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e', ring:'#fde68a' },
+  Suspendido: { pin:'#6b7280', bg:'#f1f5f9', txt:'#374151', ring:'#e2e8f0' },
 }
 
 // Iconos para diferentes tipos de ubicación
@@ -109,11 +109,14 @@ export default function MapaPage() {
   const [loading,  setLoading]  = useState(true)
   const [leafletReady, setLeafletReady] = useState(false)
   
-  // ─── Estados para el buscador avanzado ───────────────────────
   const [busquedaGlobal, setBusquedaGlobal] = useState('')
   const [resultadosBusqueda, setResultadosBusqueda] = useState([])
   const [mostrarResultados, setMostrarResultados] = useState(false)
   const [busquedaActiva, setBusquedaActiva] = useState(false)
+  
+  const [contextMenu, setContextMenu] = useState(null)
+  const [contextCoords, setContextCoords] = useState(null)
+  const [clienteResaltado, setClienteResaltado] = useState(null)
   
   const [busqueda, setBusqueda] = useState('')
   const [filtro,   setFiltro]   = useState('')
@@ -149,10 +152,33 @@ export default function MapaPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  // ─── Sincronizar ref con state del medidor ───
+  // ─── Detectar si viene de reportes para resaltar cliente ───────────────────────
   useEffect(() => {
-    medidorActivoRef.current = medidor.activo
-  }, [medidor.activo])
+    const urlParams = new URLSearchParams(window.location.search)
+    const clienteId = urlParams.get('resaltar_cliente')
+    const reporteId = urlParams.get('desde_reporte')
+    
+    if (clienteId && reporteId) {
+      const cliente = clientes.find(c => c.id === parseInt(clienteId))
+      if (cliente && cliente.latitud && cliente.longitud) {
+        setClienteResaltado(parseInt(clienteId))
+        setShowMode('clientes')
+        setSelected(cliente)
+        setSelectedType('cliente')
+        
+        // Mover mapa al cliente con zoom alto
+        setTimeout(() => {
+          mapObj.current?.flyTo([Number(cliente.latitud), Number(cliente.longitud)], 18, { duration: 1.5 })
+        }, 1000)
+        
+        // Limpar URL después de 3 segundos
+        setTimeout(() => {
+          window.history.replaceState({}, '', window.location.pathname)
+          setClienteResaltado(null)
+        }, 8000)
+      }
+    }
+  }, [clientes])
 
   // ─── Buscador avanzado ─────────────────────────────────────────
   const buscarGlobal = useCallback((query) => {
@@ -320,6 +346,9 @@ export default function MapaPage() {
       }
     })
 
+    // Click derecho para menú contextual
+    map.on('contextmenu', handleMapRightClick)
+
     mapObj.current = map
   }, [leafletReady, canWrite])
 
@@ -346,7 +375,11 @@ export default function MapaPage() {
         popupAnchor:tieneAlerta ? [0, -44] : [0, -44],
       })
 
-      const marker = L.marker([Number(c.latitud), Number(c.longitud)], { icon, title: c.nombre_razon_social })
+      const marker = L.marker([Number(c.latitud), Number(c.longitud)], { 
+        icon, 
+        title: c.nombre_razon_social,
+        zIndexOffset: clienteResaltado === c.id ? 1000 : 0
+      })
 
       marker.bindPopup(`
         <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
@@ -363,7 +396,44 @@ export default function MapaPage() {
         </div>
       `, { maxWidth: 300 })
 
-      marker.on('click', () => { setSelected(c); setSelectedType('cliente') })
+      // Animación de resaltado para cliente específico
+      if (clienteResaltado === c.id) {
+        const pulseIcon = L.icon({
+          iconUrl: makeSvgPin('#dc2626', 'alert', { width: 40, height: 52 }),
+          iconSize: [40, 52],
+          iconAnchor: [20, 52],
+          popupAnchor: [0, -54],
+        })
+        
+        // Crear marcador pulsante
+        const pulseMarker = L.marker([Number(c.latitud), Number(c.longitud)], { 
+          icon: pulseIcon,
+          zIndexOffset: 2000
+        }).addTo(mapObj.current)
+        
+        // Animación de pulso
+        let scale = 1
+        let growing = true
+        const pulseInterval = setInterval(() => {
+          if (growing) {
+            scale += 0.05
+            if (scale >= 1.2) growing = false
+          } else {
+            scale -= 0.05
+            if (scale <= 1) growing = true
+          }
+          
+          pulseMarker.setZIndexOffset(2000)
+        }, 200)
+        
+        // Limpiar después de 8 segundos
+        setTimeout(() => {
+          clearInterval(pulseInterval)
+          pulseMarker.remove()
+        }, 8000)
+        
+        markersRef.current.push(pulseMarker)
+      }
       if (showMode === 'clientes') marker.addTo(mapObj.current)
       markersRef.current.push(marker)
     })
@@ -435,6 +505,38 @@ export default function MapaPage() {
       mapObj.current.fitBounds(group.getBounds().pad(0.15))
     }
   }, [clientes, antenas, puntosRef, planes, reportes, leafletReady, loading, showMode])
+
+  // ─── Sincronizar ref con state del medidor ───
+  useEffect(() => {
+    medidorActivoRef.current = medidor.activo
+  }, [medidor.activo])
+
+  // ─── Menú contextual del mapa ─────────────────────────────────
+  const handleMapRightClick = useCallback((e) => {
+    e.originalEvent.preventDefault()
+    setContextMenu({
+      x: e.originalEvent.clientX,
+      y: e.originalEvent.clientY
+    })
+    setContextCoords({
+      lat: e.latlng.lat,
+      lng: e.latlng.lng
+    })
+  }, [])
+
+  const cerrarContextMenu = useCallback(() => {
+    setContextMenu(null)
+    setContextCoords(null)
+  }, [])
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClick = () => cerrarContextMenu()
+    if (contextMenu) {
+      document.addEventListener('click', handleClick)
+      return () => document.removeEventListener('click', handleClick)
+    }
+  }, [contextMenu, cerrarContextMenu])
 
   // ─── Renderizar polilínea del medidor ────
   useEffect(() => {
@@ -571,9 +673,10 @@ export default function MapaPage() {
         latitud: formData.latitud || BAR_LAT,
         longitud: formData.longitud || BAR_LNG,
         ubicacion_descripcion: formData.ubicacion_descripcion || '',
-        contacto_telefono: formData.contacto_telefono || '',
-        horario_atencion: formData.horario_atencion || '',
-        nota_especial: formData.nota_especial || '',
+        // Los demás campos quedan vacíos o null
+        contacto_telefono: '',
+        horario_atencion: '',
+        nota_especial: '',
       })
       await alertaExito('¡Listo!', 'Punto de referencia creado correctamente')
       setModalForm(null)
@@ -663,6 +766,47 @@ export default function MapaPage() {
           font-size: 10px; padding: 2px 8px; border-radius: 10px;
           font-weight: 600; text-transform: uppercase;
           flex-shrink: 0;
+        }
+        .gn-context-menu {
+          position: fixed; background: #fff; border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
+          z-index: 1000; min-width: 180px; overflow: hidden;
+        }
+        .gn-context-menu-item {
+          padding: 12px 16px; cursor: pointer; transition: background 0.15s;
+          display: flex; align-items: center; gap: 10px; font-size: 13px;
+          color: #334155; border-bottom: 1px solid #f1f5f9;
+        }
+        .gn-context-menu-item:hover {
+          background: #f8fafc;
+        }
+        .gn-context-menu-item:last-child {
+          border-bottom: none;
+        }
+        .gn-context-menu-icon {
+          font-size: 16px;
+        }
+        @media (max-width: 768px) {
+          .gn-search-container {
+            width: 280px;
+            right: 10px;
+            top: 10px;
+          }
+          .gn-search-input {
+            font-size: 12px;
+            padding: 8px 12px;
+          }
+          .gn-context-menu {
+            min-width: 160px;
+            font-size: 12px;
+          }
+          .gn-context-menu-item {
+            padding: 10px 12px;
+            font-size: 12px;
+          }
+          .gn-context-menu-icon {
+            font-size: 14px;
+          }
         }
       `}</style>
 
@@ -878,6 +1022,72 @@ export default function MapaPage() {
             </div>
           )}
         </div>
+
+        {/* ── MENÚ CONTEXTUAL ─────────────────────────────────────── */}
+        {contextMenu && contextCoords && (
+          <div 
+            className="gn-context-menu"
+            style={{
+              left: `${contextMenu.x}px`,
+              top: `${contextMenu.y}px`
+            }}
+          >
+            <div 
+              className="gn-context-menu-item"
+              onClick={() => {
+                setFormData({
+                  nombre: '',
+                  latitud: contextCoords.lat,
+                  longitud: contextCoords.lng,
+                  ubicacion_descripcion: '',
+                  banda_frecuencia: '',
+                  potencia_watts: '',
+                  alcance_approx_metros: '',
+                  nota_tecnica: ''
+                })
+                setModalForm('nueva_antena')
+                cerrarContextMenu()
+              }}
+            >
+              <span className="gn-context-menu-icon">📡</span>
+              Agregar Antena
+            </div>
+            <div 
+              className="gn-context-menu-item"
+              onClick={() => {
+                setFormData({
+                  nombre: '',
+                  latitud: contextCoords.lat,
+                  longitud: contextCoords.lng,
+                  ubicacion_descripcion: ''
+                })
+                setModalForm('nuevo_punto_ref')
+                cerrarContextMenu()
+              }}
+            >
+              <span className="gn-context-menu-icon">📍</span>
+              Agregar Punto de Referencia
+            </div>
+            <div 
+              className="gn-context-menu-item"
+              onClick={() => {
+                navigator.clipboard.writeText(`${contextCoords.lat.toFixed(6)}, ${contextCoords.lng.toFixed(6)}`)
+                alertaExito('Coordenadas copiadas', 'Lat,Lng copiadas al portapapeles')
+                cerrarContextMenu()
+              }}
+            >
+              <span className="gn-context-menu-icon">📋</span>
+              Copiar Coordenadas
+            </div>
+            <div 
+              className="gn-context-menu-item"
+              onClick={cerrarContextMenu}
+            >
+              <span className="gn-context-menu-icon">❌</span>
+              Cancelar
+            </div>
+          </div>
+        )}
 
         {/* ── Panel lateral ─────────────────────────────────────── */}
         <div style={{ display:'flex', flexDirection:'column', gap:12, overflow:'hidden' }}>
@@ -1228,27 +1438,8 @@ export default function MapaPage() {
                 <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Descripción</label>
                 <input className="input" value={formData.ubicacion_descripcion || ''} onChange={e => setFormData({...formData, ubicacion_descripcion: e.target.value})} placeholder="Dirección o referencia" />
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Latitud</label>
-                  <input className="input" type="number" step="0.000001" value={formData.latitud || ''} onChange={e => setFormData({...formData, latitud: parseFloat(e.target.value)})} placeholder="10.067" />
-                </div>
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Longitud</label>
-                  <input className="input" type="number" step="0.000001" value={formData.longitud || ''} onChange={e => setFormData({...formData, longitud: parseFloat(e.target.value)})} placeholder="-69.347" />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Teléfono</label>
-                <input className="input" value={formData.contacto_telefono || ''} onChange={e => setFormData({...formData, contacto_telefono: e.target.value})} placeholder="0414-1234567" />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Horario</label>
-                <input className="input" value={formData.horario_atencion || ''} onChange={e => setFormData({...formData, horario_atencion: e.target.value})} placeholder="8:00-20:00 L-V" />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4, display:'block' }}>Nota especial</label>
-                <textarea className="input" rows={2} value={formData.nota_especial || ''} onChange={e => setFormData({...formData, nota_especial: e.target.value})} placeholder="Información adicional" />
+              <div style={{ fontSize:11, color:'#64748b', padding:8, background:'#f8fafc', borderRadius:8 }}>
+                📍 Coordenadas: {formData.latitud?.toFixed(6) || '10.067'}, {formData.longitud?.toFixed(6) || '-69.347'}
               </div>
             </div>
             <div style={{ display:'flex', gap:8, marginTop:16 }}>
