@@ -3,31 +3,48 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getSesion, tienePermiso, alertaExito, alertaError } from '@/lib/api'
 
 const ESTADO_COLOR = {
-  Activo:    { pin:'#16a34a', bg:'#dcfce7', txt:'#166534' },
-  Cortado:   { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b' },
-  Moroso:    { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e' },
-  Suspendido:{ pin:'#6b7280', bg:'#f1f5f9', txt:'#374151' },
+  Activo:    { pin:'#16a34a', bg:'#dcfce7', txt:'#166534', ring:'#bbf7d0' },
+  Cortado:   { pin:'#dc2626', bg:'#fee2e2', txt:'#991b1b', ring:'#fecaca' },
+  Moroso:    { pin:'#d97706', bg:'#fef9c3', txt:'#854d0e', ring:'#fde68a' },
+  Suspendido:{ pin:'#6b7280', bg:'#f1f5f9', txt:'#374151', ring:'#e2e8f0' },
+}
+
+// Barquisimeto, Venezuela
+const BAR_LAT = 10.067
+const BAR_LNG = -69.347
+
+function makeSvgPin(color) {
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+      <filter id="sh" x="-30%" y="-10%" width="160%" height="150%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000040"/>
+      </filter>
+      <path d="M16 1C7.715 1 1 7.715 1 16c0 11.25 15 25 15 25S31 27.25 31 16C31 7.715 24.285 1 16 1z"
+        fill="${color}" stroke="white" stroke-width="2" filter="url(#sh)"/>
+      <circle cx="16" cy="16" r="5.5" fill="white" opacity="0.95"/>
+    </svg>
+  `)}`
 }
 
 export default function MapaPage() {
-  const sesion    = getSesion()
-  const canWrite  = tienePermiso(sesion?.rol, 'write')
-  const mapRef    = useRef(null)
-  const mapObj    = useRef(null)
-  const markers   = useRef([])
-  const infoWin   = useRef(null)
+  const sesion   = getSesion()
+  const canWrite = tienePermiso(sesion?.rol, 'write')
+  const mapRef   = useRef(null)
+  const mapObj   = useRef(null)
+  const markersRef = useRef([])
+  const leafletRef = useRef(null)
 
-  const [clientes, setClientes]   = useState([])
-  const [planes,   setPlanes]     = useState([])
-  const [loading,  setLoading]    = useState(true)
-  const [filtro,   setFiltro]     = useState('')
-  const [busqueda, setBusqueda]   = useState('')
-  const [selected, setSelected]   = useState(null)
-  const [editCoord, setEditCoord] = useState(null) // { lat, lng }
-  const [saving,   setSaving]     = useState(false)
-  const [mapsReady, setMapsReady] = useState(false)
-  const [apiKey,   setApiKey]     = useState('')
+  const [clientes, setClientes] = useState([])
+  const [planes,   setPlanes]   = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [leafletReady, setLeafletReady] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [filtro,   setFiltro]   = useState('')
+  const [selected, setSelected] = useState(null)
+  const [editCoord, setEditCoord] = useState(null)
+  const [saving,   setSaving]   = useState(false)
 
+  // ─── Cargar datos ─────────────────────────────────────────────
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
@@ -40,111 +57,103 @@ export default function MapaPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  // Cargar Google Maps
-  function loadMap(key) {
-    if (!key.trim()) { alertaError('Clave requerida', 'Ingresa tu Google Maps API Key'); return }
-    setApiKey(key.trim())
-    if (window.google?.maps) { setMapsReady(true); return }
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key.trim()}&language=es`
-    script.async = true
-    script.onload = () => setMapsReady(true)
-    script.onerror = () => alertaError('Error', 'No se pudo cargar Google Maps. Verifica la API key.')
-    document.head.appendChild(script)
-  }
-
-  // Inicializar mapa
+  // ─── Cargar Leaflet CSS+JS dinámicamente ───────────────────────
   useEffect(() => {
-    if (!mapsReady || !mapRef.current || mapObj.current) return
-    mapObj.current = new window.google.maps.Map(mapRef.current, {
+    if (typeof window === 'undefined') return
+    if (window.L) { setLeafletReady(true); return }
+
+    const link = document.createElement('link')
+    link.rel  = 'stylesheet'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(link)
+
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.async = true
+    script.onload = () => {
+      leafletRef.current = window.L
+      setLeafletReady(true)
+    }
+    document.head.appendChild(script)
+  }, [])
+
+  // ─── Inicializar mapa ──────────────────────────────────────────
+  useEffect(() => {
+    if (!leafletReady || !mapRef.current || mapObj.current) return
+    const L = window.L
+
+    const map = L.map(mapRef.current, {
+      center: [BAR_LAT, BAR_LNG],
       zoom: 13,
-      center: { lat: 10.48, lng: -66.87 }, // Venezuela por defecto
-      mapTypeId: 'roadmap',
-      styles: [
-        { featureType:'poi', elementType:'labels', stylers:[{visibility:'off'}] },
-        { featureType:'transit', elementType:'labels', stylers:[{visibility:'off'}] },
-      ],
-      disableDefaultUI: false,
       zoomControl: true,
-      streetViewControl: false,
-      fullscreenControl: true,
-      mapTypeControl: false,
     })
 
-    infoWin.current = new window.google.maps.InfoWindow()
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map)
 
     // Click en mapa para reubicar cliente seleccionado
-    mapObj.current.addListener('click', (e) => {
-      if (selected && canWrite) {
-        setEditCoord({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+    map.on('click', (e) => {
+      if (canWrite) {
+        setEditCoord({ lat: e.latlng.lat, lng: e.latlng.lng })
       }
     })
-  }, [mapsReady])
 
-  // Dibujar markers cuando cambian clientes o mapa está listo
+    mapObj.current = map
+  }, [leafletReady, canWrite])
+
+  // ─── Dibujar markers ──────────────────────────────────────────
   useEffect(() => {
-    if (!mapObj.current || !mapsReady) return
+    if (!mapObj.current || !leafletReady || loading) return
+    const L = window.L
 
-    // Limpiar markers anteriores
-    markers.current.forEach(m => m.setMap(null))
-    markers.current = []
+    // Limpiar markers previos
+    markersRef.current.forEach(m => m.remove())
+    markersRef.current = []
 
-    const conCoordenadas = clientes.filter(c => c.latitud && c.longitud)
-    const cfg = ESTADO_COLOR
+    const conCoords = clientes.filter(c => c.latitud && c.longitud)
 
-    conCoordenadas.forEach(c => {
-      const col = cfg[c.estado_servicio]?.pin || '#6b7280'
+    conCoords.forEach(c => {
+      const cfg  = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
       const plan = planes.find(p => p.id === c.plan_id)
 
-      // SVG pin personalizado
-      const svgPin = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-          <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z"
-            fill="${col}" stroke="white" stroke-width="2"/>
-          <circle cx="16" cy="16" r="6" fill="white" opacity="0.9"/>
-        </svg>`
-
-      const marker = new window.google.maps.Marker({
-        position: { lat: Number(c.latitud), lng: Number(c.longitud) },
-        map: mapObj.current,
-        title: c.nombre_razon_social,
-        icon: {
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgPin)}`,
-          scaledSize: new window.google.maps.Size(32, 40),
-          anchor: new window.google.maps.Point(16, 40),
-        }
+      const icon = L.icon({
+        iconUrl:    makeSvgPin(cfg.pin),
+        iconSize:   [32, 42],
+        iconAnchor: [16, 42],
+        popupAnchor:[0, -44],
       })
 
-      marker.addListener('click', () => {
-        setSelected(c)
-        setEditCoord(null)
-        infoWin.current.setContent(`
-          <div style="font-family:Inter,sans-serif;padding:4px;min-width:200px;">
-            <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:4px">${c.nombre_razon_social}</div>
-            <div style="font-size:12px;color:#64748b;margin-bottom:8px">${c.documento_identidad || ''}</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <span style="background:${cfg[c.estado_servicio]?.bg};color:${cfg[c.estado_servicio]?.txt};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">${c.estado_servicio}</span>
-              ${plan ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">${plan.nombre_plan}</span>` : ''}
-            </div>
-            ${c.telefono ? `<div style="font-size:12px;color:#374151;margin-top:8px">📞 ${c.telefono}</div>` : ''}
-            ${c.zona_sector ? `<div style="font-size:12px;color:#94a3b8">📍 ${c.zona_sector}</div>` : ''}
+      const marker = L.marker([Number(c.latitud), Number(c.longitud)], { icon, title: c.nombre_razon_social })
+
+      marker.bindPopup(`
+        <div style="font-family:Inter,system-ui,sans-serif;min-width:200px;padding:4px">
+          <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:4px">${c.nombre_razon_social}</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">${c.documento_identidad || ''}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="background:${cfg.bg};color:${cfg.txt};padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid ${cfg.ring}">${c.estado_servicio}</span>
+            ${plan ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600">${plan.nombre_plan}</span>` : ''}
           </div>
-        `)
-        infoWin.current.open(mapObj.current, marker)
-      })
+          ${c.telefono ? `<div style="font-size:12px;color:#374151;margin-top:4px">📞 ${c.telefono}</div>` : ''}
+          ${c.zona_sector ? `<div style="font-size:12px;color:#94a3b8">📍 ${c.zona_sector}</div>` : ''}
+          ${c.direccion_ubicacion ? `<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic">${c.direccion_ubicacion}</div>` : ''}
+        </div>
+      `, { maxWidth: 280 })
 
-      markers.current.push(marker)
+      marker.on('click', () => setSelected(c))
+      marker.addTo(mapObj.current)
+      markersRef.current.push(marker)
     })
 
-    // Si hay markers, centrar el mapa en ellos
-    if (markers.current.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds()
-      conCoordenadas.forEach(c => bounds.extend({ lat: Number(c.latitud), lng: Number(c.longitud) }))
-      mapObj.current.fitBounds(bounds)
+    // Ajustar bounds si hay markers
+    if (markersRef.current.length > 0) {
+      const group = L.featureGroup(markersRef.current)
+      mapObj.current.fitBounds(group.getBounds().pad(0.15))
     }
-  }, [clientes, planes, mapsReady])
+  }, [clientes, planes, leafletReady, loading])
 
-  // Guardar coordenadas del cliente seleccionado
+  // ─── Guardar coordenadas ───────────────────────────────────────
   async function guardarUbicacion() {
     if (!selected || !editCoord) return
     setSaving(true)
@@ -162,123 +171,141 @@ export default function MapaPage() {
     finally { setSaving(false) }
   }
 
-  // Clientes sin ubicación
-  const sinUbicacion   = clientes.filter(c => !c.latitud || !c.longitud)
-  const conUbicacion   = clientes.filter(c => c.latitud && c.longitud)
-  const filtradosSin   = sinUbicacion.filter(c => {
+  // Mover mapa a un cliente de la lista
+  function volarA(c) {
+    if (!mapObj.current || !c.latitud) return
+    mapObj.current.flyTo([Number(c.latitud), Number(c.longitud)], 16, { duration: 1 })
+    setSelected(c)
+  }
+
+  const sinUbicacion  = clientes.filter(c => !c.latitud || !c.longitud)
+  const conUbicacion  = clientes.filter(c => c.latitud && c.longitud)
+  const filtradosSin  = sinUbicacion.filter(c => {
     const q = busqueda.toLowerCase()
     return (!q || c.nombre_razon_social?.toLowerCase().includes(q)) &&
            (!filtro || c.estado_servicio === filtro)
   })
 
-  const [localKey, setLocalKey] = useState('')
-
-  if (!mapsReady) return (
-    <div>
-      <div className="card" style={{ maxWidth:480, margin:'40px auto', textAlign:'center', padding:'40px 36px' }}>
-        <div style={{ fontSize:36, marginBottom:16 }}>🗺️</div>
-        <div style={{ fontSize:18, fontWeight:700, color:'#0f172a', marginBottom:8 }}>Mapa de clientes</div>
-        <div style={{ fontSize:13, color:'#94a3b8', marginBottom:24, lineHeight:1.6 }}>
-          Para usar el mapa necesitas una <strong>Google Maps API Key</strong> gratuita.<br/>
-          Ve a <a href="https://console.cloud.google.com/apis/credentials" target="_blank"
-            rel="noopener noreferrer" style={{ color:'#16a34a' }}>console.cloud.google.com</a>,
-          crea una clave con acceso a Maps JavaScript API y pégala aquí.
-        </div>
-        <div style={{ display:'flex', gap:8 }}>
-          <input className="input" placeholder="AIzaSy..." value={localKey}
-            onChange={e => setLocalKey(e.target.value)}
-            onKeyDown={e => e.key==='Enter' && loadMap(localKey)} />
-          <button className="btn btn-primary" onClick={() => loadMap(localKey)}>
-            Cargar mapa
-          </button>
-        </div>
-        <div style={{ fontSize:11, color:'#cbd5e1', marginTop:12 }}>
-          La clave se usa solo en tu navegador y no se almacena en el servidor.
-        </div>
-        {/* Stats sin mapa */}
-        {!loading && (
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:28 }}>
-            <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:12, padding:16 }}>
-              <div style={{ fontSize:11, color:'#94a3b8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.8px', marginBottom:6 }}>Con ubicación</div>
-              <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:26, color:'#16a34a', fontWeight:600 }}>{conUbicacion.length}</div>
-            </div>
-            <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:12, padding:16 }}>
-              <div style={{ fontSize:11, color:'#94a3b8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.8px', marginBottom:6 }}>Sin ubicación</div>
-              <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:26, color:'#d97706', fontWeight:600 }}>{sinUbicacion.length}</div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+  // Estadísticas por estado
+  const statsPorEstado = Object.entries(ESTADO_COLOR).map(([estado, cfg]) => ({
+    estado, cfg,
+    total: clientes.filter(c => c.estado_servicio === estado).length
+  })).filter(s => s.total > 0)
 
   return (
     <div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:16, height:'calc(100vh - 130px)', minHeight:500 }}>
+      {/* ── Estilos Leaflet override ─────────────────────────────── */}
+      <style>{`
+        .leaflet-container { font-family: Inter, system-ui, sans-serif; border-radius: 16px; }
+        .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important; border: 1px solid #e2e8f0; }
+        .leaflet-popup-tip-container { display: none; }
+        .leaflet-control-attribution { font-size: 10px !important; }
+        .leaflet-control-zoom a { border-radius: 8px !important; }
+        .gn-map-selected-banner {
+          position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+          background: #0f172a; color: #fff; border-radius: 10px;
+          padding: 8px 18px; font-size: 12px; font-weight: 500;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.3); white-space: nowrap;
+          z-index: 800; pointer-events: none;
+        }
+      `}</style>
 
-        {/* Mapa */}
-        <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid #e2e8f0', boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:16, height:'calc(100vh - 130px)', minHeight:500 }}>
+
+        {/* ── Mapa ──────────────────────────────────────────────── */}
+        <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid #e2e8f0', boxShadow:'0 1px 8px rgba(0,0,0,0.07)' }}>
           <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
+
+          {/* Banner de edición */}
+          {selected && canWrite && editCoord ? (
+            <div className="gn-map-selected-banner">
+              📍 Nueva posición seleccionada — guarda o cancela abajo
+            </div>
+          ) : selected && canWrite ? (
+            <div className="gn-map-selected-banner">
+              🖱️ {selected.nombre_razon_social} — haz clic en el mapa para mover
+            </div>
+          ) : null}
 
           {/* Leyenda */}
           <div style={{
-            position:'absolute', bottom:16, left:16,
-            background:'#fff', borderRadius:12, padding:'10px 14px',
-            boxShadow:'0 2px 12px rgba(0,0,0,0.15)', border:'1px solid #e2e8f0',
-            display:'flex', flexDirection:'column', gap:6,
+            position:'absolute', bottom:24, left:12, zIndex:500,
+            background:'rgba(255,255,255,0.96)', borderRadius:12,
+            padding:'10px 14px', boxShadow:'0 2px 12px rgba(0,0,0,0.12)',
+            border:'1px solid #e2e8f0', backdropFilter:'blur(4px)',
           }}>
+            <div style={{ fontSize:10, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:8 }}>Estado</div>
             {Object.entries(ESTADO_COLOR).map(([estado, cfg]) => (
-              <div key={estado} style={{ display:'flex', alignItems:'center', gap:7, fontSize:12 }}>
-                <div style={{ width:10, height:10, borderRadius:'50%', background:cfg.pin, flexShrink:0 }} />
-                <span style={{ color:'#334155', fontWeight:500 }}>{estado}</span>
+              <div key={estado} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, marginBottom:5, color:'#334155' }}>
+                <div style={{ width:10, height:10, borderRadius:'50%', background:cfg.pin, flexShrink:0, boxShadow:`0 0 0 2px ${cfg.ring}` }} />
+                <span style={{ fontWeight:500 }}>{estado}</span>
               </div>
             ))}
           </div>
 
-          {/* Banner editar coordenada */}
-          {selected && canWrite && (
+          {/* Cargando overlay */}
+          {!leafletReady && (
             <div style={{
-              position:'absolute', top:12, left:'50%', transform:'translateX(-50%)',
-              background:'#0f172a', color:'#fff', borderRadius:10,
-              padding:'8px 16px', fontSize:12, fontWeight:500,
-              boxShadow:'0 4px 16px rgba(0,0,0,0.3)', whiteSpace:'nowrap',
+              position:'absolute', inset:0, display:'flex', alignItems:'center',
+              justifyContent:'center', background:'#f6f8fa', zIndex:600,
             }}>
-              {editCoord
-                ? `📍 Click en "${selected.nombre_razon_social}" para reubicar`
-                : `Seleccionado: ${selected.nombre_razon_social} — haz clic en el mapa para mover`}
+              <div style={{ textAlign:'center' }}>
+                <div style={{ width:36, height:36, border:'3px solid #e2e8f0', borderTop:'3px solid #16a34a', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 16px' }} />
+                <div style={{ fontSize:14, color:'#64748b' }}>Cargando mapa…</div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Panel lateral */}
-        <div style={{ display:'flex', flexDirection:'column', gap:14, overflow:'hidden' }}>
+        {/* ── Panel lateral ─────────────────────────────────────── */}
+        <div style={{ display:'flex', flexDirection:'column', gap:12, overflow:'hidden' }}>
 
-          {/* Stats */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, padding:'12px 14px' }}>
-              <div style={{ fontSize:10, color:'#94a3b8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.8px', marginBottom:4 }}>Con ubicación</div>
-              <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:20, color:'#16a34a', fontWeight:600 }}>{conUbicacion.length}</div>
+          {/* Stats por estado */}
+          <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:14, padding:'14px 16px' }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Resumen</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+              <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, padding:'10px 12px' }}>
+                <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>En mapa</div>
+                <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#16a34a', fontWeight:700 }}>{conUbicacion.length}</div>
+              </div>
+              <div style={{ background:'#fef9c3', border:'1px solid #fde68a', borderRadius:10, padding:'10px 12px' }}>
+                <div style={{ fontSize:10, color:'#64748b', fontWeight:600, textTransform:'uppercase', letterSpacing:'.7px', marginBottom:4 }}>Sin ubicar</div>
+                <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:22, color:'#d97706', fontWeight:700 }}>{sinUbicacion.length}</div>
+              </div>
             </div>
-            <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, padding:'12px 14px' }}>
-              <div style={{ fontSize:10, color:'#94a3b8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.8px', marginBottom:4 }}>Sin ubicar</div>
-              <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:20, color:'#d97706', fontWeight:600 }}>{sinUbicacion.length}</div>
-            </div>
+            {statsPorEstado.map(({ estado, cfg, total }) => (
+              <div key={estado} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:7, fontSize:12, color:'#334155' }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.pin }} />
+                  {estado}
+                </div>
+                <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:12, fontWeight:700, color:cfg.txt, background:cfg.bg, padding:'1px 8px', borderRadius:10 }}>{total}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Cliente seleccionado / editar coord */}
+          {/* Panel cliente seleccionado */}
           {selected && (
-            <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:12, padding:14 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:'#0f172a', marginBottom:4 }}>{selected.nombre_razon_social}</div>
-              <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>{selected.documento_identidad} · {selected.estado_servicio}</div>
+            <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:12, padding:14, flexShrink:0 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#0f172a', lineHeight:1.3 }}>{selected.nombre_razon_social}</div>
+                <button onClick={() => { setSelected(null); setEditCoord(null) }}
+                  style={{ background:'none', border:'none', cursor:'pointer', color:'#94a3b8', fontSize:16, lineHeight:1, padding:0 }}>✕</button>
+              </div>
+              <div style={{ fontSize:11, color:'#64748b', marginBottom:10 }}>
+                {selected.documento_identidad && <span>{selected.documento_identidad} · </span>}
+                <span style={{ color: ESTADO_COLOR[selected.estado_servicio]?.txt || '#64748b', fontWeight:600 }}>{selected.estado_servicio}</span>
+              </div>
+
               {editCoord ? (
                 <div>
-                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#16a34a', marginBottom:10 }}>
+                  <div style={{ fontFamily:'JetBrains Mono,monospace', fontSize:11, color:'#16a34a', marginBottom:10, background:'#fff', borderRadius:8, padding:'6px 10px', border:'1px solid #bbf7d0' }}>
                     Lat: {editCoord.lat.toFixed(6)}<br/>
                     Lon: {editCoord.lng.toFixed(6)}
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
                     <button className="btn btn-primary btn-sm" onClick={guardarUbicacion} disabled={saving}>
-                      {saving ? 'Guardando…' : '💾 Guardar'}
+                      {saving ? 'Guardando…' : '💾 Guardar ubicación'}
                     </button>
                     <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)}>Cancelar</button>
                   </div>
@@ -290,63 +317,75 @@ export default function MapaPage() {
                       {Number(selected.latitud).toFixed(5)}, {Number(selected.longitud).toFixed(5)}
                     </div>
                   )}
-                  <div style={{ display:'flex', gap:6 }}>
-                    {canWrite && (
-                      <button className="btn btn-ghost btn-sm" onClick={() => setEditCoord(null)}>
-                        📍 {selected.latitud ? 'Mover pin' : 'Haz clic en el mapa'}
-                      </button>
-                    )}
-                    <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); infoWin.current?.close() }}>✕</button>
-                  </div>
+                  {canWrite && (
+                    <button className="btn btn-ghost btn-sm" style={{ width:'100%', justifyContent:'center' }}
+                      onClick={() => setEditCoord(selected.latitud ? { lat: Number(selected.latitud), lng: Number(selected.longitud) } : null)}>
+                      📍 {selected.latitud ? 'Mover pin en mapa' : 'Haz clic en el mapa para ubicar'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Lista clientes sin ubicación */}
-          <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-            <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9' }}>
-              <div style={{ fontSize:13, fontWeight:600, color:'#0f172a', marginBottom:8 }}>Sin ubicar ({sinUbicacion.length})</div>
-              <input className="input" style={{ fontSize:12 }} placeholder="Buscar…"
-                value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+          {/* Lista sin ubicación */}
+          <div style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+            <div style={{ padding:'12px 14px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'#0f172a' }}>Sin ubicar</div>
+                <span style={{ fontSize:11, color:'#d97706', fontWeight:700, fontFamily:'JetBrains Mono,monospace' }}>{sinUbicacion.length}</span>
+              </div>
+              <div style={{ display:'flex', gap:6, flexDirection:'column' }}>
+                <input className="input" style={{ fontSize:12, padding:'7px 10px' }} placeholder="Buscar…"
+                  value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+                <select className="select" style={{ fontSize:12, padding:'7px 10px' }}
+                  value={filtro} onChange={e => setFiltro(e.target.value)}>
+                  <option value="">Todos los estados</option>
+                  {Object.keys(ESTADO_COLOR).map(e => <option key={e}>{e}</option>)}
+                </select>
+              </div>
             </div>
             <div style={{ overflowY:'auto', flex:1 }}>
               {loading ? (
-                <div style={{ padding:24, textAlign:'center', color:'#94a3b8' }}>Cargando…</div>
+                <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>Cargando…</div>
               ) : filtradosSin.length === 0 ? (
                 <div style={{ padding:24, textAlign:'center', color:'#94a3b8', fontSize:13 }}>
-                  {sinUbicacion.length === 0 ? '✓ Todos los clientes tienen ubicación' : 'Sin resultados'}
+                  {sinUbicacion.length === 0 ? '✓ Todos los clientes están en el mapa' : 'Sin resultados'}
                 </div>
-              ) : (
-                filtradosSin.map(c => {
-                  const cfg = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
-                  return (
-                    <div key={c.id}
-                      style={{
-                        padding:'10px 14px', borderBottom:'1px solid #f8fafc',
-                        cursor: canWrite ? 'pointer' : 'default',
-                        background: selected?.id === c.id ? '#f0fdf4' : 'transparent',
-                        transition:'background .15s',
-                      }}
-                      onClick={() => canWrite && setSelected(c)}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                        <div style={{ fontSize:13, fontWeight:500, color:'#0f172a' }}>{c.nombre_razon_social}</div>
-                        <span style={{ fontSize:10, fontWeight:600, padding:'1px 7px', borderRadius:10, background:cfg.bg, color:cfg.txt }}>
-                          {c.estado_servicio}
-                        </span>
-                      </div>
-                      <div style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>{c.zona_sector || 'Sin zona'}</div>
-                      {canWrite && selected?.id === c.id && !editCoord && (
-                        <div style={{ fontSize:11, color:'#16a34a', marginTop:4, fontWeight:500 }}>
-                          → Haz clic en el mapa para fijar ubicación
-                        </div>
-                      )}
+              ) : filtradosSin.map(c => {
+                const cfg = ESTADO_COLOR[c.estado_servicio] || ESTADO_COLOR.Activo
+                return (
+                  <div key={c.id}
+                    style={{
+                      padding:'10px 14px', borderBottom:'1px solid #f8fafc',
+                      cursor: canWrite ? 'pointer' : 'default',
+                      background: selected?.id === c.id ? '#f0fdf4' : 'transparent',
+                      transition:'background .15s',
+                    }}
+                    onClick={() => { if (canWrite) { setSelected(c); setEditCoord(null) } }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:'#0f172a', lineHeight:1.3 }}>{c.nombre_razon_social}</div>
+                      <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:10, background:cfg.bg, color:cfg.txt, flexShrink:0 }}>
+                        {c.estado_servicio}
+                      </span>
                     </div>
-                  )
-                })
-              )}
+                    <div style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>{c.zona_sector || 'Sin zona'}</div>
+                    {canWrite && selected?.id === c.id && !editCoord && (
+                      <div style={{ fontSize:11, color:'#16a34a', marginTop:4, fontWeight:600 }}>
+                        → Haz clic en el mapa para fijar ubicación
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
+
+          {/* Botón centrar en Barquisimeto */}
+          <button className="btn btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:12 }}
+            onClick={() => mapObj.current?.flyTo([BAR_LAT, BAR_LNG], 13, { duration: 1.2 })}>
+            🏙️ Centrar en Barquisimeto
+          </button>
         </div>
       </div>
     </div>

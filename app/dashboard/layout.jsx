@@ -157,6 +157,8 @@ export default function DashboardLayout({ children }) {
     width:52px;height:44px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
     color:#cbd5e1;cursor:pointer;border:none;background:transparent;
+    transition:background 0.15s,color 0.15s;
+  }
   .gn-logout:hover{background:#fef2f2;color:#ef4444;}
 
   /* ─── TOPBAR ─────────────────────────────────── */
