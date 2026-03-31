@@ -49,15 +49,20 @@ export async function POST(req) {
     if (!cliente_id || !mes_cobro)
       return NextResponse.json({ ok: false, msg: 'cliente_id y mes_cobro son requeridos.' }, { status: 400 })
 
-    // Verificar duplicado (mismo cliente, mismo mes, no rechazado)
-    const { data: existe } = await supabaseAdmin
-      .from('pagos').select('id')
-      .eq('cliente_id', cliente_id)
-      .eq('mes_cobro', mes_cobro)
-      .neq('estado_verificacion', 'Rechazado')
-      .single()
-    if (existe)
-      return NextResponse.json({ ok: false, msg: `Ya existe un pago registrado para ${mes_cobro}.` }, { status: 409 })
+    // Verificar referencia duplicada (si se proporcionó una)
+    if (referencia && referencia.trim()) {
+      const { data: refExiste } = await supabaseAdmin
+        .from('pagos').select('id, nombre_cliente, mes_cobro, fecha_pago')
+        .eq('referencia', referencia.trim())
+        .neq('estado_verificacion', 'Rechazado')
+        .maybeSingle()
+      if (refExiste)
+        return NextResponse.json({
+          ok: false,
+          msg: `La referencia "${referencia}" ya fue registrada para ${refExiste.nombre_cliente} (${refExiste.mes_cobro}, ${refExiste.fecha_pago}).`,
+          duplicado: refExiste,
+        }, { status: 409 })
+    }
 
     // Datos del cliente si no vienen
     let cliData = { cedula_cliente, nombre_cliente, tipo_cliente }

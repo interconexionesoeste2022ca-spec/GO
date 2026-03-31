@@ -17,6 +17,7 @@ const ICONS = {
   logout:    <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
   cobranza: <><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/><line x1="12" y1="14" x2="12" y2="17"/><circle cx="12" cy="14" r="2"/></>,
   mapa:     <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+  rentabilidad: <><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></>,
 }
 
 const NAV = [
@@ -27,6 +28,7 @@ const NAV = [
   { href:'/dashboard/cuentas',   key:'cuentas',   label:'Cuentas'    },
   { href:'/dashboard/reportes',  key:'reportes',  label:'Reportes'   },
   { href:'/dashboard/tasa-bcv',  key:'tasa',      label:'Tasa BCV'   },
+  { href:'/dashboard/rentabilidad', key:'rentabilidad', label:'Rentabilidad' },
   { href:'/dashboard/fidelidad', key:'fidelidad', label:'Fidelidad'  },
   { href:'/dashboard/cobranza',  key:'cobranza', label:'Cobranza'   },
   { href:'/dashboard/mapa',      key:'mapa',     label:'Mapa'        },

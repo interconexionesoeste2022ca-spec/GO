@@ -1,6 +1,6 @@
 // app/api/upload/route.js
-// Sube comprobantes a Supabase Storage (bucket: comprobantes)
-// Si tienes Google Drive configurado, también funciona con eso.
+// Sube comprobantes a Google Drive vía Apps Script (primero)
+// o Supabase Storage como fallback
 import { NextResponse } from 'next/server'
 import { getSesion, assertRol, supabaseAdmin, respError } from '@/lib/apiHelpers'
 
@@ -15,6 +15,8 @@ export async function POST(req) {
     const formData = await req.formData()
     const file     = formData.get('file')
     const nombre   = (formData.get('nombre') || 'comprobante').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'')
+    const mes      = formData.get('mes') || new Date().toISOString().slice(0,7)
+    const cliente  = formData.get('cliente') || nombre
 
     if (!file) return NextResponse.json({ok:false,msg:'No se recibió archivo.'},{status:400})
 
@@ -32,17 +34,27 @@ export async function POST(req) {
     const bytes  = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Intentar Google Drive primero si está configurado
+    // ─── Opción 1: Google Apps Script ──────────────────────
+    if (process.env.GOOGLE_SCRIPT_URL && process.env.GOOGLE_SCRIPT_URL !== 'pendiente') {
+      try {
+        const result = await subirViaAppsScript(buffer, file.type, path, mes, cliente)
+        return NextResponse.json({ ok:true, ...result })
+      } catch(e) {
+        console.warn('[Upload] Apps Script falló, probando Service Account:', e.message)
+      }
+    }
+
+    // ─── Opción 2: Google Drive Service Account ───────────
     if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY && process.env.GOOGLE_DRIVE_FOLDER_ID) {
       try {
         const result = await subirGoogleDrive(buffer, file.type, path)
         return NextResponse.json({ ok:true, ...result })
       } catch(e) {
-        console.warn('[Upload] Google Drive falló, usando Supabase:', e.message)
+        console.warn('[Upload] Google Drive Service Account falló, usando Supabase:', e.message)
       }
     }
 
-    // Fallback: Supabase Storage
+    // ─── Opción 3: Supabase Storage (fallback) ────────────
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(path, buffer, {
@@ -51,7 +63,6 @@ export async function POST(req) {
       })
 
     if (error) {
-      // Si el bucket no existe, crearlo y reintentar
       if (error.message?.includes('not found') || error.statusCode === 404) {
         await supabaseAdmin.storage.createBucket(BUCKET, { public: true })
         const { data: d2, error: e2 } = await supabaseAdmin.storage
@@ -78,12 +89,48 @@ export async function POST(req) {
   } catch(e) { return respError(e) }
 }
 
+// ─── Google Apps Script upload ─────────────────────────────────
+async function subirViaAppsScript(buffer, mimeType, filename, mes, cliente) {
+  const scriptUrl = process.env.GOOGLE_SCRIPT_URL
+  const base64 = buffer.toString('base64')
+
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      file: base64,
+      nombre: filename,
+      mimeType,
+      mes,
+      cliente,
+    }),
+    redirect: 'follow',
+  })
+
+  // Apps Script devuelve un redirect, seguirlo manualmente si es necesario
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) }
+  catch { throw new Error('Respuesta inválida de Apps Script: ' + text.slice(0, 200)) }
+
+  if (!data.ok) throw new Error(data.msg || 'Error en Apps Script')
+
+  return {
+    fileId: data.fileId,
+    name: data.name,
+    viewUrl: data.viewUrl,
+    directUrl: data.directUrl,
+    capture_url: data.viewUrl,
+    fuente: 'google_apps_script',
+  }
+}
+
+// ─── Google Drive Service Account (legacy) ─────────────────────
 async function subirGoogleDrive(buffer, mimeType, filename) {
   const email    = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const keyRaw   = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g,'\n')
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID
 
-  // JWT Google
   const now = Math.floor(Date.now()/1000)
   const header  = {alg:'RS256',typ:'JWT'}
   const payload = {iss:email,scope:'https://www.googleapis.com/auth/drive.file',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}
